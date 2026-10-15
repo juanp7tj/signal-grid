@@ -732,8 +732,9 @@ app.get(/^\/(?!api\/).*/, (_req, res, next) => {
 /* =========================================================
    Start
    ========================================================= */
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Signal Grid em http://localhost:${PORT}`);
+  console.log(`🌐 Ambiente: ${process.env.NODE_ENV || "development"}`);
   console.log(`🧠 Provider: ${AI_PROVIDER}`);
   if (AI_PROVIDER === "ollama") {
     console.log(`   └ Ollama: ${OLLAMA_BASE_URL} (modelo: ${OLLAMA_MODEL})`);
