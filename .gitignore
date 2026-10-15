@@ -1,13 +1,23 @@
-node_modules/
-dist/
-dist-server/
+# Environment
 .env
-.env.*
-!.env.example
-.DS_Store
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules
+
+# Build
+dist
+build
+
+# Logs
 *.log
 npm-debug.log*
-.vscode/*
-!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
 .idea/
-coverage/

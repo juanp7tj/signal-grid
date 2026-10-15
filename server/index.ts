@@ -395,58 +395,67 @@ function extractJson(raw: string): unknown {
 }
 
 /* =========================================================
-   Health check
+   Health check (público) — versão minimalista
    ========================================================= */
-app.get("/api/health", async (_req, res) => {
-  const providerInfo = {
-    provider: AI_PROVIDER,
-    baseUrl: AI_PROVIDER === "ollama" ? OLLAMA_BASE_URL : OPENAI_BASE_URL,
-    model: AI_PROVIDER === "ollama" ? OLLAMA_MODEL : OPENAI_MODEL,
-  };
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true });
+});
 
-  try {
-    if (AI_PROVIDER === "ollama") {
-      const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
-        headers: OLLAMA_API_KEY ? { Authorization: `Bearer ${OLLAMA_API_KEY}` } : {},
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!response.ok) throw new Error(`Ollama respondeu HTTP ${response.status}`);
-      const body = (await response.json()) as { models?: { name: string }[] };
-      return res.json({
-        ok: true,
-        ...providerInfo,
-        models: body.models?.map((m) => m.name) || [],
-      });
-    } else {
-      if (!OPENAI_API_KEY) {
-        return res.status(503).json({
-          ok: false,
+/* =========================================================
+   Debug interno — só em desenvolvimento
+   ========================================================= */
+if (process.env.NODE_ENV !== "production") {
+  app.get("/api/_debug/health", async (_req, res) => {
+    const providerInfo = {
+      provider: AI_PROVIDER,
+      baseUrl: AI_PROVIDER === "ollama" ? OLLAMA_BASE_URL : OPENAI_BASE_URL,
+      model: AI_PROVIDER === "ollama" ? OLLAMA_MODEL : OPENAI_MODEL,
+    };
+
+    try {
+      if (AI_PROVIDER === "ollama") {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+          headers: OLLAMA_API_KEY ? { Authorization: `Bearer ${OLLAMA_API_KEY}` } : {},
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!response.ok) throw new Error(`Ollama respondeu HTTP ${response.status}`);
+        const body = (await response.json()) as { models?: { name: string }[] };
+        return res.json({
+          ok: true,
           ...providerInfo,
-          error: "OPENAI_API_KEY não configurada no .env",
+          models: body.models?.map((m) => m.name) || [],
+        });
+      } else {
+        if (!OPENAI_API_KEY) {
+          return res.status(503).json({
+            ok: false,
+            ...providerInfo,
+            error: "OPENAI_API_KEY não configurada no .env",
+          });
+        }
+        const response = await fetch(`${OPENAI_BASE_URL}/v1/models`, {
+          headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!response.ok) {
+          throw new Error(`Provider respondeu HTTP ${response.status}`);
+        }
+        const body = (await response.json()) as { data?: { id: string }[] };
+        return res.json({
+          ok: true,
+          ...providerInfo,
+          models: body.data?.map((m) => m.id) || [],
         });
       }
-      const response = await fetch(`${OPENAI_BASE_URL}/v1/models`, {
-        headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!response.ok) {
-        throw new Error(`Provider respondeu HTTP ${response.status}`);
-      }
-      const body = (await response.json()) as { data?: { id: string }[] };
-      return res.json({
-        ok: true,
+    } catch (error) {
+      return res.status(503).json({
+        ok: false,
         ...providerInfo,
-        models: body.data?.map((m) => m.id) || [],
+        error: error instanceof Error ? error.message : "Provider indisponível",
       });
     }
-  } catch (error) {
-    return res.status(503).json({
-      ok: false,
-      ...providerInfo,
-      error: error instanceof Error ? error.message : "Provider indisponível",
-    });
-  }
-});
+  });
+}
 
 /* =========================================================
    Análise
