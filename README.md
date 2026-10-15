@@ -1,3 +1,98 @@
+# Signal Grid
+
+> Inteligência competitiva para Instagram — MVP que analisa um perfil individualmente ou compara dois perfis, gerando diagnóstico estratégico com plano de ação detalhado.
+
+![Status](https://img.shields.io/badge/status-MVP-brightgreen)
+![Node](https://img.shields.io/badge/node-%E2%89%A520-blue)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+---
+
+## 📖 Sobre
+
+**Signal Grid** é uma ferramenta para agências e profissionais de social media que precisam analisar perfis do Instagram e transformar sinais em decisões estratégicas.
+
+O sistema recebe um **briefing** (nome, URL, nicho, público e evidências) e usa **IA** para gerar:
+
+- **Diagnóstico completo** — notas em 4 pilares (Conteúdo, Consistência, Posicionamento, Engajamento)
+- **Ranking comparativo** (no modo de comparação)
+- **Oportunidades prioritárias** com impacto estimado
+- **Plano de ação** — específico por perfil no modo de comparação
+- **Exportação em PDF** do relatório completo
+
+---
+
+## ✨ Screenshots
+
+### Briefing — defina os perfis
+
+![Briefing](./docs/01-briefing.png)
+
+### Visão geral — diagnóstico e ranking
+
+![Visão geral](./docs/02-overview.png)
+
+### Comparação de perfis — análise detalhada
+
+![Comparação](./docs/03-compare.png)
+
+### Plano de ação — tabs por perfil
+
+![Plano de ação](./docs/04-actions.png)
+
+### Modo de análise única — 1 perfil
+
+![Modo único](./docs/05-single-mode.png)
+
+---
+
+## 🎯 Modos de análise
+
+### Análise Única
+
+Diagnóstico completo de **um perfil**: forças, fraquezas, oportunidades e plano de ação específico.
+
+### Comparação
+
+Compara **dois perfis** lado a lado:
+
+- Ranking com vantagem do líder
+- Comparativo de pilares
+- **Plano de ação separado** para cada perfil (com tabs)
+
+Use o **toggle no topo** para alternar entre os modos.
+
+---
+
+## 🚀 Começando
+
+### Pré-requisitos
+
+- **Node.js 20 ou superior** — [baixar](https://nodejs.org/)
+- **Conta em um provider de IA** (recomendado: **Groq** — grátis)
+
+### Instalação
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/juanp7tj/signal-grid.git
+cd signal-grid
+
+# 2. Instale as dependências
+npm install
+
+# 3. Copie o arquivo de variáveis de ambiente
+# Windows (PowerShell):
+Copy-Item .env.example .env
+# Linux/Mac:
+cp .env.example .env
+
+# 4. Edite o .env e configure seu provider (veja abaixo)
+
+# 5. Inicie o servidor de desenvolvimento
+npm run dev
+
+
 🔑 Configurando o provider de IA
 Opção 1 — Groq (recomendado, gratuito)
 Crie uma conta em console.groq.com
