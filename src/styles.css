@@ -221,11 +221,6 @@ textarea::placeholder {
   100% { box-shadow: 0 0 0 0 rgba(200, 255, 61, 0); }
 }
 
-.side-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
 
 .nav-caption {
   font: 9px var(--mono);
@@ -239,24 +234,7 @@ textarea::placeholder {
   margin-top: 24px;
 }
 
-.side-nav button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  text-align: left;
-  font-size: 13px;
-  color: var(--text-dim);
-  border-radius: var(--r-md);
-  transition: background 0.15s ease, color 0.15s ease;
-  position: relative;
-  font-weight: 500;
-}
 
-.side-nav button:hover {
-  background: var(--panel-2);
-  color: var(--text);
-}
 
 .side-nav button.active {
   background: var(--panel-3);
@@ -2823,5 +2801,156 @@ textarea::placeholder {
 
   .mode-option-desc {
     font-size: 11px;
+  }
+}
+
+/* =========================================================
+   Side nav — Desktop vs Mobile
+   ========================================================= */
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 14px;
+}
+
+.side-nav button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-dim);
+  border-radius: var(--r-md);
+  transition: background 0.15s ease, color 0.15s ease;
+  position: relative;
+  font-weight: 500;
+  background: transparent;
+  border: 0;
+}
+
+.side-nav button:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.side-nav button.active {
+  background: var(--panel-3);
+  color: var(--text);
+}
+
+.side-nav button.active::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--gradient-accent);
+  border-radius: 0 2px 2px 0;
+}
+
+.side-nav button.active svg {
+  color: var(--lime);
+}
+
+.nav-key {
+  margin-left: auto;
+  font: 9px var(--mono);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+}
+
+.nav-caption {
+  font: 9px var(--mono);
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  padding: 12px 10px 8px;
+  text-transform: uppercase;
+}
+
+.nav-caption-spaced {
+  margin-top: 24px;
+}
+
+.side-nav button span:not(.nav-key) {
+  display: none; /* esconde o texto no desktop, já que o ícone + label completa */
+}
+
+/* =========================================================
+   Mobile — bottom navigation
+   ========================================================= */
+@media (max-width: 900px) {
+  .side-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    flex-direction: row;
+    background: rgba(10, 11, 8, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--line);
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+    gap: 4px;
+    z-index: 50;
+    justify-content: space-around;
+    margin: 0;
+  }
+
+  .side-nav .nav-caption {
+    display: none;
+  }
+
+  .side-nav button {
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 4px;
+    font-size: 10px;
+    text-align: center;
+    border-radius: var(--r-md);
+    justify-content: center;
+    min-height: 54px;
+    background: transparent;
+  }
+
+  .side-nav button.active::before {
+    display: none;
+  }
+
+  .side-nav button.active {
+    color: var(--lime);
+    background: transparent;
+  }
+
+  .side-nav button.active svg {
+    color: var(--lime);
+  }
+
+  .side-nav button span:not(.nav-key) {
+    display: inline; /* mostra o texto no mobile */
+  }
+
+  .nav-key {
+    display: none;
+  }
+}
+
+/* =========================================================
+   Desktop — esconde a bottom nav (usa o sidebar)
+   ========================================================= */
+@media (min-width: 901px) {
+  .side-nav {
+    position: absolute;
+    top: 120px;
+    left: 0;
+    width: 240px;
+    padding: 0 14px;
   }
 }
