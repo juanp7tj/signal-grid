@@ -1,52 +1,64 @@
 # Signal Grid
 
-MVP de inteligência competitiva para comparar dois perfis do Instagram, com frontend React/Vite/TypeScript e backend Express integrado ao Ollama local.
+> Inteligência competitiva para Instagram — MVP que compara dois perfis e gera diagnóstico estratégico com plano de ação separado por perfil.
 
-## Requisitos
-- Node.js 20 ou superior
-- Ollama instalado e em execução
-- Modelo local, por exemplo `qwen2.5:3b`
+![Status](https://img.shields.io/badge/status-MVP-brightgreen)
+![Node](https://img.shields.io/badge/node-%E2%89%A520-blue)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-## Iniciar em desenvolvimento
+---
 
-1. Extraia o ZIP e abra a pasta `signal-grid` no terminal.
-2. Instale as dependências:
+## 📖 Sobre
 
-   ```bash
-   npm install
-   ```
+**Signal Grid** é uma ferramenta para agências e profissionais de social media que precisam comparar dois perfis do Instagram e transformar sinais em decisões estratégicas.
 
-3. Baixe o modelo:
+O sistema recebe um **briefing** (nome, URL, nicho, público e evidências) dos dois perfis e usa **IA** para gerar:
 
-   ```bash
-   ollama pull qwen2.5:3b
-   ```
+- **Diagnóstico comparativo** com notas em 4 pilares (Conteúdo, Consistência, Posicionamento, Engajamento)
+- **Ranking** com vantagem do líder
+- **Oportunidades prioritárias** com impacto estimado
+- **Plano de ação separado** para cada perfil, com etapas, prazo, responsável e KPI
+- **Exportação em PDF** do relatório completo
 
-4. Copie `.env.example` para `.env` e ajuste se necessário.
-   - PowerShell: `Copy-Item .env.example .env`
-   - CMD: `copy .env.example .env`
+---
 
-5. Inicie o servidor e o frontend:
+## ✨ Funcionalidades
 
-   ```bash
-   npm run dev
-   ```
+- 🎨 **Interface dark** inspirada no Instagram, com glassmorphism e gradientes
+- 📱 **Responsiva** — funciona em desktop, tablet e mobile (bottom navigation)
+- 🧠 **Múltiplos providers de IA** — Groq, DeepSeek, OpenAI, Ollama (local)
+- 📊 **Comparação visual** com barras de score por pilar
+- 🗂️ **Planos de ação em tabs** — um plano específico para cada perfil
+- 📄 **Exportação em PDF** formatada para consultoria
+- 🔒 **Modo demonstrativo** para testar a interface sem chamar a IA
+- 💾 **Configurações persistentes** na sessão do navegador
 
-6. Acesse `http://localhost:3000`.
+---
 
-## Verificar o Ollama
-Abra `http://localhost:3000/api/health`. Deve retornar `ok: true` e uma lista de modelos, se o Ollama estiver acessível.
+## 🚀 Começando
 
-## Como funciona
-- O backend envia o briefing para `OLLAMA_BASE_URL/api/chat`.
-- O Ollama local normalmente não exige `OLLAMA_API_KEY`; o projeto só envia Bearer token se essa variável for configurada.
-- Para endpoint OpenAI-compatible de outro serviço, configure a URL de acordo com o serviço usado. O endpoint implementado no momento é a API nativa `/api/chat` do Ollama.
-- Se a conexão falhar, a interface mostra um erro e sugere usar o modo demonstrativo. Não substitui silenciosamente uma falha por dados falsos.
-- O MVP não faz scraping nem login no Instagram. As URLs servem como referência e o agente só pode analisar o contexto/evidências que o usuário fornecer.
-- “Exportar PDF” abre o diálogo de impressão do navegador; selecione “Salvar como PDF”.
+### Pré-requisitos
 
-## Build
-O comando `npm run build` compila o frontend. Para produção, compile também o backend com uma configuração de build Node dedicada antes de usar `npm start`; a execução de desenvolvimento (`npm run dev`) é o caminho pronto para teste local.
+- **Node.js 20 ou superior** — [baixar](https://nodejs.org/)
+- **Conta em um provider de IA** (recomendado: **Groq** — grátis)
 
-## Segurança
-Não publique `.env`, não envie chaves ao frontend e não coloque credenciais em repositórios. Use o sistema apenas com dados que você tenha autorização para tratar.
+### Instalação
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/juanp7tj/signal-grid.git
+cd signal-grid
+
+# 2. Instale as dependências
+npm install
+
+# 3. Copie o arquivo de variáveis de ambiente
+# Windows (PowerShell):
+Copy-Item .env.example .env
+# Linux/Mac:
+cp .env.example .env
+
+# 4. Edite o .env e configure seu provider (veja abaixo)
+
+# 5. Inicie o servidor de desenvolvimento
+npm run dev
