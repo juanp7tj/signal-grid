@@ -1,0 +1,18 @@
+﻿{
+  "profileA": {
+    "name": "Nike",
+    "url": "https://instagram.com/nike",
+    "niche": "Esportes",
+    "audience": "Jovens",
+    "objective": "Aumentar alcance"
+  },
+  "profileB": {
+    "name": "Adidas",
+    "url": "https://instagram.com/adidas",
+    "niche": "Esportes",
+    "audience": "Jovens",
+    "objective": "Aumentar alcance"
+  },
+  "evidence": "Nike publica 4x/semana. Adidas publica 2x/semana.",
+  "demoMode": false
+}

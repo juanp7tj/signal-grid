@@ -1,0 +1,1310 @@
+import { useMemo, useState } from "react";
+import {
+  Activity, ArrowDownRight, ArrowUpRight, BarChart3, Check, ChevronRight,
+  CircleHelp, FileText, Gauge, Instagram, Layers3,
+  LoaderCircle, Menu, Settings2, ShieldCheck, SlidersHorizontal, Sparkles,
+  Target, TrendingUp, X
+} from "lucide-react";
+import type { ActionItem, AnalysisReport, ProfileInput, Settings } from "./types";
+
+/* =========================================================
+   Constantes
+   ========================================================= */
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
+
+const initialA: ProfileInput = {
+  name: "Perfil A",
+  url: "https://instagram.com/perfil_a",
+  niche: "Marketing digital",
+  audience: "Pequenas empresas",
+  objective: "Gerar leads",
+};
+
+const initialB: ProfileInput = {
+  name: "Perfil B",
+  url: "https://instagram.com/perfil_b",
+  niche: "Marketing digital",
+  audience: "Pequenas empresas",
+  objective: "Gerar leads",
+};
+
+const demoReport: AnalysisReport = {
+  title: "Diagnóstico competitivo",
+  summary:
+    "Relatório demonstrativo para visualizar a interface. Os dados e as notas abaixo são ilustrativos, não representam métricas reais dos perfis.",
+  ranking: ["Perfil A", "Perfil B"],
+  profiles: [
+    {
+      profileName: "Perfil A",
+      overall: 7.8, content: 8.4, consistency: 7.1, positioning: 8.2, engagement: 6.8,
+      strengths: [
+        "Linha editorial reconhecível",
+        "Conteúdo educativo com potencial de salvamento",
+        "Identidade visual relativamente consistente",
+      ],
+      weaknesses: [
+        "Chamadas para ação pouco específicas",
+        "Pouca evidência pública para avaliar conversão",
+      ],
+      evidence: [
+        "Exemplo ilustrativo: avaliar os 12 posts mais recentes",
+        "Exemplo ilustrativo: observar formatos e CTAs",
+      ],
+    },
+    {
+      profileName: "Perfil B",
+      overall: 6.9, content: 7.1, consistency: 6.5, positioning: 7.4, engagement: 6.7,
+      strengths: [
+        "Tema central compreensível",
+        "Possibilidade de aproveitar tendências do nicho",
+      ],
+      weaknesses: [
+        "Pilares de conteúdo podem estar dispersos",
+        "Diferencial de marca pouco explícito",
+      ],
+      evidence: [
+        "Exemplo ilustrativo: conferir frequência de publicação",
+        "Exemplo ilustrativo: comparar formatos recentes",
+      ],
+    },
+  ],
+  opportunities: [
+    {
+      title: "Transformar dúvidas em séries",
+      description:
+        "Organizar perguntas recorrentes do público em conteúdos sequenciais, com uma promessa clara por publicação.",
+      impact: "Alto",
+    },
+    {
+      title: "Padronizar chamadas para ação",
+      description:
+        "Definir uma ação principal por conteúdo e relacioná-la ao objetivo comercial.",
+      impact: "Alto",
+    },
+    {
+      title: "Criar uma rotina de testes",
+      description:
+        "Comparar formatos e temas usando métricas disponíveis ao administrador da conta.",
+      impact: "Médio",
+    },
+  ],
+  actionPlanA: [
+    {
+      priority: "Alta",
+      title: "Mapear os conteúdos de melhor desempenho",
+      reason: "Criar uma linha de base antes de alterar a estratégia.",
+      steps: [
+        "Listar os 12 conteúdos recentes",
+        "Registrar formato, tema e CTA",
+        "Anotar métricas públicas ou fornecidas pelo cliente",
+      ],
+      metric: "Planilha de auditoria preenchida",
+      deadline: "7 dias",
+      owner: "Social Media",
+      kpi: "12 conteúdos classificados",
+    },
+    {
+      priority: "Alta",
+      title: "Definir três pilares editoriais",
+      reason: "Aumentar a clareza da mensagem e a repetibilidade da produção.",
+      steps: [
+        "Escolher três temas ligados ao posicionamento",
+        "Criar duas pautas por tema",
+        "Associar cada pauta a um objetivo",
+      ],
+      metric: "Seis pautas aprovadas",
+      deadline: "14 dias",
+      owner: "Estrategista",
+      kpi: "6 pautas no calendário",
+    },
+  ],
+  actionPlanB: [
+    {
+      priority: "Alta",
+      title: "Executar testes de CTA",
+      reason: "Descobrir quais chamadas levam à ação desejada.",
+      steps: [
+        "Criar duas variações de CTA",
+        "Manter o tema comparável",
+        "Revisar resultados após o período definido",
+      ],
+      metric: "Resultados registrados por variação",
+      deadline: "30 dias",
+      owner: "Social Media",
+      kpi: "CTA vencedor com margem ≥ 20%",
+    },
+    {
+      priority: "Média",
+      title: "Padronizar identidade visual",
+      reason: "Marca reconhecível aumenta memorização e alcance orgânico.",
+      steps: [
+        "Definir paleta e fontes",
+        "Aplicar em 10 posts seguintes",
+        "Medir alcance médio antes/depois",
+      ],
+      metric: "Paleta aplicada em 10 posts",
+      deadline: "30 dias",
+      owner: "Designer + Social Media",
+      kpi: "+10% de alcance médio em 30 dias",
+    },
+  ],
+  caveats: [
+    "Modo demonstrativo: substitua este relatório por uma análise do agente.",
+    "Links de Instagram não são raspados automaticamente. Informe evidências públicas ou métricas fornecidas pelo cliente para uma avaliação mais fundamentada.",
+  ],
+  generatedAt: new Date().toISOString(),
+  mode: "demo",
+};
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+function validInstagramUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    return ["instagram.com", "www.instagram.com"].includes(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+/* =========================================================
+   Subcomponentes
+   ========================================================= */
+function ScoreBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="score-row">
+      <div className="score-row-label">
+        <span>{label}</span>
+        <strong>
+          {value.toFixed(1)}
+          <small>/10</small>
+        </strong>
+      </div>
+      <div className="bar">
+        <span style={{ width: `${Math.max(0, Math.min(10, value)) * 10}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function ProfileForm({
+  label,
+  profile,
+  onChange,
+}: {
+  label: string;
+  profile: ProfileInput;
+  onChange: (v: ProfileInput) => void;
+}) {
+  const set = (key: keyof ProfileInput, value: string) =>
+    onChange({ ...profile, [key]: value });
+
+  return (
+    <section className="profile-form">
+      <div className="profile-form-head">
+        <span className="eyebrow">{label}</span>
+        <span className="profile-chip">
+          <Instagram size={13} /> Instagram
+        </span>
+      </div>
+      <label>
+        Nome de referência
+        <input
+          value={profile.name}
+          onChange={(e) => set("name", e.target.value)}
+          placeholder="Ex.: Marca A"
+          required
+        />
+      </label>
+      <label>
+        URL do perfil
+        <input
+          value={profile.url}
+          onChange={(e) => set("url", e.target.value)}
+          placeholder="https://instagram.com/usuario"
+          required
+        />
+      </label>
+      <label>
+        Nicho
+        <input
+          value={profile.niche}
+          onChange={(e) => set("niche", e.target.value)}
+          placeholder="Ex.: estética, tecnologia"
+        />
+      </label>
+      <label>
+        Público-alvo
+        <input
+          value={profile.audience}
+          onChange={(e) => set("audience", e.target.value)}
+          placeholder="Quem a marca deseja alcançar?"
+        />
+      </label>
+      <label>
+        Objetivo principal
+        <select
+          value={profile.objective}
+          onChange={(e) => set("objective", e.target.value)}
+        >
+          <option>Gerar leads</option>
+          <option>Vender produtos</option>
+          <option>Construir autoridade</option>
+          <option>Aumentar alcance</option>
+          <option>Construir comunidade</option>
+        </select>
+      </label>
+    </section>
+  );
+}
+
+function ActionCard({ item, index }: { item: ActionItem; index: number }) {
+  const [open, setOpen] = useState(index === 0);
+
+  return (
+    <article className={`action-card ${open ? "expanded" : ""}`}>
+      <button
+        className="action-head"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
+        <span className="action-number">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span className="action-title-wrap">
+          <span className={`priority ${item.priority.toLowerCase()}`}>
+            {item.priority} prioridade
+          </span>
+          <strong>{item.title}</strong>
+          <small>{item.reason}</small>
+        </span>
+        <ChevronRight className={open ? "rotated" : ""} size={18} />
+      </button>
+
+      {open && (
+        <div className="action-details">
+          <div>
+            <span className="eyebrow">ETAPAS</span>
+            <ol>
+              {item.steps.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ol>
+          </div>
+          <div className="action-meta">
+            <div className="metric-box">
+              <Target size={16} />
+              <span>
+                <small>MÉTRICA DE CONCLUSÃO</small>
+                <strong>{item.metric}</strong>
+              </span>
+            </div>
+            <div className="meta-grid">
+              <div>
+                <small>PRAZO</small>
+                <strong>{item.deadline}</strong>
+              </div>
+              <div>
+                <small>RESPONSÁVEL</small>
+                <strong>{item.owner}</strong>
+              </div>
+              <div className="meta-wide">
+                <small>KPI</small>
+                <strong>{item.kpi}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+/* =========================================================
+   Action Plan Tabs — plano separado por perfil
+   ========================================================= */
+function ActionPlanTabs({ report }: { report: AnalysisReport }) {
+  const [tab, setTab] = useState<"A" | "B">("A");
+
+  const profileA = report.profiles[0];
+  const profileB = report.profiles[1];
+
+  const items = tab === "A" ? report.actionPlanA : report.actionPlanB;
+  const profileName = tab === "A" ? profileA?.profileName : profileB?.profileName;
+
+  return (
+    <div className="action-tabs">
+      <div className="action-tabs-header">
+        <button
+          className={`action-tab ${tab === "A" ? "active" : ""}`}
+          onClick={() => setTab("A")}
+        >
+          <span className="action-tab-label">PLANO A</span>
+          <strong>{profileA?.profileName || "Perfil A"}</strong>
+          <span className="action-tab-count">
+            {report.actionPlanA.length} ações
+          </span>
+        </button>
+        <button
+          className={`action-tab ${tab === "B" ? "active" : ""}`}
+          onClick={() => setTab("B")}
+        >
+          <span className="action-tab-label">PLANO B</span>
+          <strong>{profileB?.profileName || "Perfil B"}</strong>
+          <span className="action-tab-count">
+            {report.actionPlanB.length} ações
+          </span>
+        </button>
+      </div>
+
+      <div className="action-tabs-body">
+        {items.length === 0 ? (
+          <div className="action-empty">
+            Nenhuma ação gerada para <strong>{profileName}</strong>.
+          </div>
+        ) : (
+          <div className="action-list">
+            {items.map((item, i) => (
+              <ActionCard
+                item={item}
+                index={i}
+                key={`${tab}-${item.title}-${i}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   View de impressão (aparece só no PDF)
+   ========================================================= */
+function ReportPrintView({ report }: { report: AnalysisReport }) {
+  const [leader, second] = report.profiles;
+
+  return (
+    <div id="print-report" aria-hidden="true">
+      <header className="print-header">
+        <div className="print-brand">
+          <span className="print-mark">//SG</span>
+          <div>
+            <strong>SIGNAL GRID</strong>
+            <small>Competitive Intelligence Report</small>
+          </div>
+        </div>
+        <div className="print-meta">
+          <span>{formatDate(report.generatedAt)}</span>
+          <span className={`mode-tag ${report.mode}`}>
+            {report.mode === "demo" ? "DEMONSTRAÇÃO" : report.mode.toUpperCase()}
+          </span>
+        </div>
+      </header>
+
+      <section className="print-section">
+        <h1>{report.title}</h1>
+        <p className="print-summary">{report.summary}</p>
+      </section>
+
+      <section className="print-section">
+        <h2>01 · Visão geral</h2>
+        <div className="print-overview">
+          <div className="print-leader">
+            <small>PERFIL LÍDER</small>
+            <strong>{leader?.profileName ?? "—"}</strong>
+            <div className="print-score">
+              {leader?.overall.toFixed(1)}
+              <small>/10</small>
+            </div>
+            <p>
+              Vantagem de{" "}
+              <strong>
+                {leader && second
+                  ? (leader.overall - second.overall).toFixed(1)
+                  : "0.0"}{" "}
+                pts
+              </strong>{" "}
+              sobre {second?.profileName}.
+            </p>
+          </div>
+
+          <div className="print-rank">
+            <small>RANKING</small>
+            <ol>
+              {report.ranking.map((name, i) => {
+                const p = report.profiles.find((x) => x.profileName === name);
+                return (
+                  <li key={name}>
+                    <span className="print-rank-num">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span>{name}</span>
+                    <strong>{p?.overall.toFixed(1)}</strong>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section className="print-section">
+        <h2>02 · Comparação por pilares</h2>
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>Dimensão</th>
+              <th>{report.profiles[0]?.profileName}</th>
+              <th>{report.profiles[1]?.profileName}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(
+              [
+                ["Conteúdo", "content"],
+                ["Consistência", "consistency"],
+                ["Posicionamento", "positioning"],
+                ["Engajamento", "engagement"],
+                ["Geral", "overall"],
+              ] as const
+            ).map(([label, key]) => (
+              <tr key={key}>
+                <td>{label}</td>
+                <td>{report.profiles[0]?.[key]?.toFixed(1) ?? "—"}</td>
+                <td>{report.profiles[1]?.[key]?.toFixed(1) ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {report.opportunities.length > 0 && (
+        <section className="print-section">
+          <h2>03 · Oportunidades prioritárias</h2>
+          <ol className="print-list">
+            {report.opportunities.map((o, i) => (
+              <li key={o.title}>
+                <strong>
+                  {String(i + 1).padStart(2, "0")} · {o.title}
+                </strong>
+                <span className="print-impact">[{o.impact}]</span>
+                <p>{o.description}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      <section className="print-section">
+        <h2>04 · Plano de ação</h2>
+        <ol className="print-actions">
+          {[...report.actionPlanA, ...report.actionPlanB].map((a, i) => (
+            <li key={a.title}>
+              <div className="print-action-head">
+                <strong>
+                  {String(i + 1).padStart(2, "0")} · {a.title}
+                </strong>
+                <span className={`print-priority p-${a.priority.toLowerCase()}`}>
+                  {a.priority}
+                </span>
+              </div>
+              <p className="print-action-reason">{a.reason}</p>
+              <div className="print-action-grid">
+                <div>
+                  <small>Prazo</small>
+                  <strong>{a.deadline}</strong>
+                </div>
+                <div>
+                  <small>Responsável</small>
+                  <strong>{a.owner}</strong>
+                </div>
+                <div>
+                  <small>KPI</small>
+                  <strong>{a.kpi}</strong>
+                </div>
+              </div>
+              <ol className="print-action-steps">
+                {a.steps.map((s, si) => (
+                  <li key={si}>{s}</li>
+                ))}
+              </ol>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {report.caveats.length > 0 && (
+        <section className="print-section print-caveats">
+          <h2>Limitações e premissas</h2>
+          {report.caveats.map((c, i) => (
+            <p key={i}>— {c}</p>
+          ))}
+        </section>
+      )}
+
+      <footer className="print-footer">
+        <span>SIGNAL GRID · COMPETITIVE INTELLIGENCE</span>
+        <span>Gerado em {formatDate(report.generatedAt)}</span>
+      </footer>
+    </div>
+  );
+}
+
+/* =========================================================
+   App principal
+   ========================================================= */
+export default function App() {
+  const [profileA, setProfileA] = useState(initialA);
+  const [profileB, setProfileB] = useState(initialB);
+  const [report, setReport] = useState<AnalysisReport | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [progress, setProgress] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showSettings, setShowSettings] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settings, setSettings] = useState<Settings>({
+    language: "Português (Brasil)",
+    tone: "Direto e estratégico",
+    model: DEFAULT_MODEL,
+  });
+  const [evidence, setEvidence] = useState("");
+  const [demoMode, setDemoMode] = useState(false);
+
+  const scoreDiff = useMemo(() => {
+    if (!report || report.profiles.length < 2) return 0;
+    return report.profiles[0].overall - report.profiles[1].overall;
+  }, [report]);
+
+  async function analyze() {
+    setError("");
+    setReport(null);
+    setLoading(true);
+    setProgress(["Validando briefing e URLs", "Preparando contexto estratégico"]);
+
+    if (!validInstagramUrl(profileA.url) || !validInstagramUrl(profileB.url)) {
+      setError("Informe duas URLs válidas de perfis do Instagram.");
+      setLoading(false);
+      return;
+    }
+
+    const timer = window.setTimeout(
+      () =>
+        setProgress((p) => [
+          ...p,
+          "Solicitando diagnóstico ao agente",
+          "Estruturando notas e plano de ação",
+        ]),
+      650
+    );
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileA,
+          profileB,
+          settings,
+          evidence,
+          demoMode,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Não foi possível concluir a análise.");
+      setReport(data as AnalysisReport);
+      setActiveTab("overview");
+      setProgress((p) => [
+        ...p,
+        data.mode === "demo"
+          ? "Modo demonstrativo ativado"
+          : "Análise concluída",
+      ]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha inesperada.");
+    } finally {
+      window.clearTimeout(timer);
+      setLoading(false);
+    }
+  }
+
+  function exportReport() {
+    if (!report) return;
+    document.body.classList.add("printing-report");
+    window.print();
+    window.setTimeout(() => {
+      document.body.classList.remove("printing-report");
+    }, 500);
+  }
+
+  const topScore = report?.profiles[0];
+
+  return (
+    <div className="app-shell">
+      {report && <ReportPrintView report={report} />}
+
+      <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
+        <div className="brand">
+          <div className="brand-mark">
+            <span>//</span>SG
+          </div>
+          <div>
+            <strong>SIGNAL GRID</strong>
+            <small>COMPETITIVE INTELLIGENCE</small>
+          </div>
+          <button
+            className="mobile-close"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Fechar menu"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="workspace">
+          <span className="workspace-dot" />
+          <span>AGÊNCIA / WORKSPACE 01</span>
+          <ChevronRight size={13} />
+        </div>
+
+        <nav className="side-nav">
+          <span className="nav-caption">WORKSPACE</span>
+          <button
+            className={activeTab === "overview" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("overview");
+              setSidebarOpen(false);
+            }}
+          >
+            <BarChart3 size={17} /> Visão geral <span className="nav-key">01</span>
+          </button>
+          <button
+            className={activeTab === "compare" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("compare");
+              setSidebarOpen(false);
+            }}
+          >
+            <Layers3 size={17} /> Comparar perfis <span className="nav-key">02</span>
+          </button>
+          <button
+            className={activeTab === "actions" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("actions");
+              setSidebarOpen(false);
+            }}
+          >
+            <Target size={17} /> Plano de ação <span className="nav-key">03</span>
+          </button>
+
+          <span className="nav-caption nav-caption-spaced">SISTEMA</span>
+          <button onClick={() => setShowSettings(true)}>
+            <Settings2 size={17} /> Personalização
+          </button>
+        </nav>
+
+        <div className="sidebar-bottom">
+          <div className="status-indicator">
+            <span className="pulse-dot" />
+            <div>
+              <strong>AGENT</strong>
+              <small>Groq · GPT-OSS 120B</small>
+            </div>
+          </div>
+          <div className="sidebar-foot">
+            <span>BUILD 1.0.0</span>
+            <span>PT-BR</span>
+          </div>
+        </div>
+      </aside>
+
+      {sidebarOpen && (
+        <button
+          className="mobile-overlay"
+          aria-label="Fechar menu"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <main className="main-canvas">
+                <nav className="side-nav">
+          <span className="nav-caption">WORKSPACE</span>
+          <button
+            className={activeTab === "overview" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("overview");
+              setSidebarOpen(false);
+            }}
+          >
+            <BarChart3 size={17} /> Visão geral <span className="nav-key">01</span>
+          </button>
+          <button
+            className={activeTab === "compare" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("compare");
+              setSidebarOpen(false);
+            }}
+          >
+            <Layers3 size={17} /> Comparar perfis <span className="nav-key">02</span>
+          </button>
+          <button
+            className={activeTab === "actions" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("actions");
+              setSidebarOpen(false);
+            }}
+          >
+            <Target size={17} /> Plano de ação <span className="nav-key">03</span>
+          </button>
+          <button onClick={() => setShowSettings(true)}>
+            <Settings2 size={17} /> Config
+          </button>
+        </nav>
+        <header className="topbar">
+          <div className="topbar-left">
+            <button
+              className="menu-toggle"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu size={19} />
+            </button>
+            <span className="breadcrumb">
+              Workspace <ChevronRight size={13} />{" "}
+              <strong>
+                {activeTab === "compare"
+                  ? "Comparação"
+                  : activeTab === "actions"
+                  ? "Plano de ação"
+                  : "Visão geral"}
+              </strong>
+            </span>
+          </div>
+          <div className="topbar-right">
+            <span className="system-status">
+              <span className="pulse-dot" /> SISTEMA OPERACIONAL
+            </span>
+            <button
+              className="icon-button"
+              title="Personalização"
+              onClick={() => setShowSettings(true)}
+            >
+              <SlidersHorizontal size={17} />
+            </button>
+            <div className="avatar">SG</div>
+          </div>
+        </header>
+
+        <div className="page-content">
+          <section className="hero-row">
+            <div>
+              <div className="eyebrow">
+                <span className="eyebrow-line" /> SOCIAL INTELLIGENCE / 001
+              </div>
+              <h1>
+                Veja onde a vantagem
+                <br />
+                <em>está escondida.</em>
+              </h1>
+              <p>
+                Compare posicionamento, conteúdo e oportunidades. Transforme
+                sinais em decisões de marketing.
+              </p>
+            </div>
+            <div className="hero-stamp">
+              <Activity size={18} />
+              <span>
+                STRATEGIC
+                <br />
+                ANALYSIS
+              </span>
+              <strong>SG—01</strong>
+            </div>
+          </section>
+
+          <section className="briefing-panel">
+            <div className="section-head">
+              <div>
+                <span className="section-index">01 / BRIEFING</span>
+                <h2>Defina a comparação</h2>
+                <p>Informe os perfis e o contexto da análise.</p>
+              </div>
+              <span className="required-note">* CAMPOS OBRIGATÓRIOS</span>
+            </div>
+
+            <div className="profile-grid">
+              <ProfileForm
+                label="PERFIL A / REFERÊNCIA"
+                profile={profileA}
+                onChange={setProfileA}
+              />
+              <div className="versus">
+                VS<span>02</span>
+              </div>
+              <ProfileForm
+                label="PERFIL B / CONCORRENTE"
+                profile={profileB}
+                onChange={setProfileB}
+              />
+            </div>
+
+            <label className="evidence-label">
+              CONTEXTO / EVIDÊNCIAS OPCIONAIS <span>RECOMENDADO</span>
+              <textarea
+                value={evidence}
+                onChange={(e) => setEvidence(e.target.value)}
+                placeholder="Cole aqui observações dos perfis, exemplos de posts, bio, frequência, métricas públicas ou dados fornecidos pelo cliente. URLs, sozinhas, não fornecem essas informações ao agente."
+              />
+            </label>
+
+            <div className="briefing-footer">
+              <div className="briefing-note">
+                <ShieldCheck size={16} />
+                <span>
+                  Sem login no Instagram. Não acessamos dados privados nem
+                  extraímos métricas automaticamente.
+                </span>
+              </div>
+              <div className="briefing-actions">
+                <label className="demo-toggle">
+                  <input
+                    type="checkbox"
+                    checked={demoMode}
+                    onChange={(e) => setDemoMode(e.target.checked)}
+                  />
+                  <span>Modo demonstrativo</span>
+                </label>
+                <button
+                  className="button-primary"
+                  onClick={analyze}
+                  disabled={loading}
+                >
+                  <span>
+                    {loading ? (
+                      <LoaderCircle className="spin" size={16} />
+                    ) : (
+                      <Sparkles size={16} />
+                    )}
+                  </span>
+                  {loading ? "ANALISANDO..." : "EXECUTAR COMPARAÇÃO"}
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {loading && (
+            <section className="progress-panel">
+              <div className="progress-top">
+                <LoaderCircle className="spin" size={19} />
+                <div>
+                  <strong>Agente estratégico em execução</strong>
+                  <small>
+                    Montando diagnóstico com base no briefing fornecido.
+                  </small>
+                </div>
+                <span className="live-label">LIVE</span>
+              </div>
+              <div className="progress-log">
+                {progress.map((p, i) => (
+                  <div key={`${p}-${i}`}>
+                    <Check size={14} />
+                    <span>{p}</span>
+                    <small>{String(i + 1).padStart(2, "0")}</small>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {error && (
+            <div className="error-banner">
+              <CircleHelp size={18} />
+              <span>{error}</span>
+              <button onClick={() => setError("")}>
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
+          {!report && !loading && (
+            <section className="empty-state">
+              <div className="empty-icon">
+                <Gauge size={25} />
+              </div>
+              <div>
+                <span className="eyebrow">AGUARDANDO INPUT</span>
+                <h3>Pronto para encontrar sinais.</h3>
+                <p>
+                  Preencha os perfis acima e execute a comparação. Se o
+                  provider estiver indisponível, ative o modo demonstrativo
+                  para testar a interface.
+                </p>
+              </div>
+              <div className="empty-index">SG / 001</div>
+            </section>
+          )}
+
+          {report && (
+            <>
+              <section className="report-header">
+                <div>
+                  <span className="section-index">
+                    02 / RESULTADO{" "}
+                    <span className={`mode-tag ${report.mode}`}>
+                      {report.mode === "demo"
+                        ? "DEMONSTRAÇÃO"
+                        : report.mode.toUpperCase()}
+                    </span>
+                  </span>
+                  <h2>{report.title}</h2>
+                  <p>{report.summary}</p>
+                </div>
+                <button className="button-secondary" onClick={exportReport}>
+                  <FileText size={16} /> EXPORTAR PDF
+                </button>
+              </section>
+
+              {activeTab === "overview" && (
+                <div className="overview-grid">
+                  <section className="metric-card lead-metric">
+                    <div className="card-topline">
+                      <span>PERFIL EM DESTAQUE</span>
+                      <TrendingUp size={17} />
+                    </div>
+                    <div className="lead-name">
+                      {topScore?.profileName || "—"}
+                    </div>
+                    <div className="lead-score">
+                      {topScore?.overall.toFixed(1)}
+                      <small>/10</small>
+                    </div>
+                    <div className="lead-bottom">
+                      <span>ÍNDICE ESTRATÉGICO</span>
+                      <span className="delta">
+                        <ArrowUpRight size={14} />{" "}
+                        {Math.abs(scoreDiff).toFixed(1)} PTS
+                      </span>
+                    </div>
+                    <div className="bar lead-bar">
+                      <span
+                        style={{ width: `${(topScore?.overall || 0) * 10}%` }}
+                      />
+                    </div>
+                  </section>
+
+                  <section className="metric-card ranking-card">
+                    <div className="card-topline">
+                      <span>RANKING</span>
+                      <span className="tiny-code">R / 02</span>
+                    </div>
+                    <div className="ranking-list">
+                      {report.profiles.map((p, i) => (
+                        <div className="ranking-item" key={p.profileName}>
+                          <span
+                            className={`rank-num ${
+                              i === 0 ? "rank-first" : ""
+                            }`}
+                          >
+                            0{i + 1}
+                          </span>
+                          <div className="rank-profile">
+                            <strong>{p.profileName}</strong>
+                            <div className="mini-bar">
+                              <span style={{ width: `${p.overall * 10}%` }} />
+                            </div>
+                          </div>
+                          <strong className="rank-score">
+                            {p.overall.toFixed(1)}
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="ranking-foot">
+                      <span>VANTAGEM DO LÍDER</span>
+                      <strong>{Math.abs(scoreDiff).toFixed(1)} PONTOS</strong>
+                    </div>
+                  </section>
+
+                  <section className="metric-card category-card">
+                    <div className="card-topline">
+                      <span>COMPARATIVO DE PILARES</span>
+                      <BarChart3 size={17} />
+                    </div>
+                    <div className="pillar-head">
+                      <span>DIMENSÃO</span>
+                      <span>{report.profiles[0]?.profileName}</span>
+                      <span>{report.profiles[1]?.profileName}</span>
+                    </div>
+                    {(
+                      [
+                        ["Conteúdo", "content"],
+                        ["Consistência", "consistency"],
+                        ["Posicionamento", "positioning"],
+                        ["Engajamento", "engagement"],
+                      ] as const
+                    ).map(([label, key]) => (
+                      <div className="pillar-row" key={key}>
+                        <span>{label}</span>
+                        <strong>
+                          {report.profiles[0]?.[key].toFixed(1) ?? "—"}
+                        </strong>
+                        <strong className="muted-score">
+                          {report.profiles[1]?.[key].toFixed(1) ?? "—"}
+                        </strong>
+                      </div>
+                    ))}
+                  </section>
+
+                  <section className="metric-card opportunities-card">
+                    <div className="card-topline">
+                      <span>OPORTUNIDADES DETECTADAS</span>
+                      <Target size={17} />
+                    </div>
+                    {report.opportunities.slice(0, 3).map((o, i) => (
+                      <div className="opportunity-row" key={o.title}>
+                        <span className="opp-num">0{i + 1}</span>
+                        <div>
+                          <strong>{o.title}</strong>
+                          <p>{o.description}</p>
+                        </div>
+                        <span
+                          className={`impact impact-${o.impact.toLowerCase()}`}
+                        >
+                          {o.impact}
+                        </span>
+                      </div>
+                    ))}
+                  </section>
+                </div>
+              )}
+
+              {activeTab === "compare" && (
+                <section className="comparison-detail">
+                  <div className="comparison-profiles">
+                    {report.profiles.map((p, i) => (
+                      <article className="detail-profile" key={p.profileName}>
+                        <div className="detail-profile-top">
+                          <span className="eyebrow">PERFIL 0{i + 1}</span>
+                          <strong className="detail-score">
+                            {p.overall.toFixed(1)}
+                            <small>/10</small>
+                          </strong>
+                        </div>
+                        <h3>{p.profileName}</h3>
+                        {(
+                          [
+                            ["Conteúdo", p.content],
+                            ["Consistência", p.consistency],
+                            ["Posicionamento", p.positioning],
+                            ["Engajamento", p.engagement],
+                          ] as const
+                        ).map(([label, value]) => (
+                          <ScoreBar
+                            key={label}
+                            label={label}
+                            value={value}
+                          />
+                        ))}
+                        <div className="strength-weak">
+                          <div>
+                            <span className="eyebrow">FORÇAS</span>
+                            {p.strengths.map((s) => (
+                              <p key={s}>
+                                <Check size={14} />
+                                {s}
+                              </p>
+                            ))}
+                          </div>
+                          <div>
+                            <span className="eyebrow">
+                              PONTOS DE ATENÇÃO
+                            </span>
+                            {p.weaknesses.map((s) => (
+                              <p key={s}>
+                                <ArrowDownRight size={14} />
+                                {s}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="evidence-list">
+                          <span className="eyebrow">
+                            EVIDÊNCIAS / OBSERVAÇÕES
+                          </span>
+                          {p.evidence.map((e) => (
+                            <p key={e}>{e}</p>
+                          ))}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {activeTab === "actions" && (
+                <section className="actions-section">
+                  <div className="action-section-intro">
+                    <div>
+                      <span className="section-index">03 / EXECUÇÃO</span>
+                      <h3>Do diagnóstico à ação.</h3>
+                      <p>
+                        Planos separados para cada perfil, com etapas, prazos
+                        e KPIs.
+                      </p>
+                    </div>
+                  </div>
+                  <ActionPlanTabs report={report} />
+                </section>
+              )}
+
+              <section className="report-footnotes">
+                <div>
+                  <ShieldCheck size={16} />
+                  <span>
+                    Notas são avaliações estratégicas do modelo, não métricas
+                    oficiais do Instagram.
+                  </span>
+                </div>
+                <button className="text-button" onClick={analyze}>
+                  <LoaderCircle size={14} /> REFAZER ANÁLISE
+                </button>
+              </section>
+
+              {report.caveats?.length > 0 && (
+                <section className="caveats">
+                  <strong>LIMITES E PREMISSAS</strong>
+                  {report.caveats.map((c, i) => (
+                    <p key={i}>— {c}</p>
+                  ))}
+                </section>
+              )}
+            </>
+          )}
+
+          <footer className="page-footer">
+            <span>© 2026 SIGNAL GRID / INTERNAL USE</span>
+            <span>
+              BUILT FOR STRATEGIC THINKING{" "}
+              <span className="footer-dot">●</span>
+            </span>
+          </footer>
+        </div>
+      </main>
+
+      {showSettings && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setShowSettings(false)}
+        >
+          <section
+            className="settings-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <span className="eyebrow">CONFIGURAÇÃO / AGENTE</span>
+                <h2>Personalização</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setShowSettings(false)}
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p>
+              Define o modelo, idioma e tom usados no prompt enviado ao
+              agente.
+            </p>
+
+            <label>
+              Modelo
+              <select
+                value={settings.model}
+                onChange={(e) =>
+                  setSettings({ ...settings, model: e.target.value })
+                }
+              >
+                <optgroup label="Groq (recomendado — grátis)">
+                  <option value="openai/gpt-oss-120b">
+                    openai/gpt-oss-120b (melhor)
+                  </option>
+                  <option value="openai/gpt-oss-20b">
+                    openai/gpt-oss-20b
+                  </option>
+                  <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b</option>
+                </optgroup>
+                <optgroup label="DeepSeek">
+                  <option value="deepseek-v4-pro">deepseek-v4-pro</option>
+                  <option value="deepseek-flash">deepseek-flash</option>
+                </optgroup>
+                <optgroup label="Ollama (local)">
+                  <option value="qwen2.5:1.5b">qwen2.5:1.5b</option>
+                  <option value="qwen2.5:3b">qwen2.5:3b</option>
+                </optgroup>
+              </select>
+            </label>
+
+            <label>
+              Idioma
+              <select
+                value={settings.language}
+                onChange={(e) =>
+                  setSettings({ ...settings, language: e.target.value })
+                }
+              >
+                <option>Português (Brasil)</option>
+                <option>English</option>
+                <option>Español</option>
+              </select>
+            </label>
+
+            <label>
+              Tom de voz
+              <select
+                value={settings.tone}
+                onChange={(e) =>
+                  setSettings({ ...settings, tone: e.target.value })
+                }
+              >
+                <option>Direto e estratégico</option>
+                <option>Consultivo e didático</option>
+                <option>Executivo e conciso</option>
+              </select>
+            </label>
+
+            <div className="modal-note">
+              <ShieldCheck size={15} /> As preferências são mantidas apenas
+              nesta sessão do navegador.
+            </div>
+            <button
+              className="button-primary modal-save"
+              onClick={() => setShowSettings(false)}
+            >
+              APLICAR CONFIGURAÇÕES <Check size={16} />
+            </button>
+          </section>
+        </div>
+      )}
+    </div>
+  );
+}
