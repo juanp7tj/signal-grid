@@ -1,5 +1,39 @@
 /* =========================================================
-   SIGNAL GRID — Dark Instagram-Inspired Design
+   SIGNAL GRID — Design System
+   =========================================================
+   1. Tokens
+   2. Reset
+   3. Layout principal
+   4. Sidebar
+   5. Topbar
+   6. Hero
+   7. Mode toggle
+   8. Briefing panel
+   9. Botões
+   10. Progress / Error / Empty
+   11. Report header
+   12. Overview grid
+   13. Ranking
+   14. Pilares
+   15. Oportunidades
+   16. Comparação detalhada
+   17. Actions
+   18. Action tabs
+   19. Action cards
+   20. Footnotes & caveats
+   21. Footer
+   22. Modal
+   23. Spinner
+   24. Print view
+   25. Responsive — Tablet
+   26. Responsive — Mobile
+   27. Print media
+   28. Reduced motion
+   ========================================================= */
+
+
+/* =========================================================
+   1. TOKENS
    ========================================================= */
 :root {
   --bg: #0a0b08;
@@ -32,7 +66,55 @@
   --mono: "IBM Plex Mono", monospace;
   color-scheme: dark;
 }
+/* =========================================================
+   ANTI-SCROLL-HORIZONTAL
+   ========================================================= */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
 
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Containers críticos nunca extrapolam a tela */
+.app-shell,
+.main-canvas,
+.page-content {
+  max-width: 100%;
+}
+
+/* Textos longos não quebram o layout */
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+strong,
+small,
+label,
+a {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* =========================================================
+   2. RESET
+   ========================================================= */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -107,7 +189,10 @@ textarea::placeholder {
   color: var(--muted);
 }
 
-/* Layout */
+
+/* =========================================================
+   3. LAYOUT PRINCIPAL
+   ========================================================= */
 .app-shell {
   min-height: 100vh;
   display: flex;
@@ -129,7 +214,10 @@ textarea::placeholder {
   flex: 1;
 }
 
-/* Sidebar */
+
+/* =========================================================
+   4. SIDEBAR
+   ========================================================= */
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -184,6 +272,17 @@ textarea::placeholder {
 
 .mobile-close {
   display: none;
+  margin-left: auto;
+  color: var(--text-dim);
+  padding: 6px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+}
+
+.mobile-close:hover {
+  background: var(--panel-2);
+  color: var(--text);
 }
 
 .workspace {
@@ -221,6 +320,11 @@ textarea::placeholder {
   100% { box-shadow: 0 0 0 0 rgba(200, 255, 61, 0); }
 }
 
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
 .nav-caption {
   font: 9px var(--mono);
@@ -234,7 +338,28 @@ textarea::placeholder {
   margin-top: 24px;
 }
 
+.side-nav button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-dim);
+  border-radius: var(--r-md);
+  transition: background 0.15s ease, color 0.15s ease;
+  position: relative;
+  font-weight: 500;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  width: 100%;
+}
 
+.side-nav button:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
 
 .side-nav button.active {
   background: var(--panel-3);
@@ -306,7 +431,9 @@ textarea::placeholder {
   display: none;
 }
 
-/* Topbar */
+/* =========================================================
+   5. TOPBAR
+   ========================================================= */
 .topbar {
   height: 64px;
   border-bottom: 1px solid var(--line);
@@ -320,6 +447,7 @@ textarea::placeholder {
   position: sticky;
   top: 0;
   z-index: 30;
+  gap: 12px;
 }
 
 .topbar-left,
@@ -331,14 +459,21 @@ textarea::placeholder {
 
 .menu-toggle {
   display: none;
+  align-items: center;
+  justify-content: center;
   width: 38px;
   height: 38px;
   border-radius: var(--r-md);
   background: var(--panel);
   border: 1px solid var(--line);
   color: var(--text);
-  align-items: center;
-  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.menu-toggle:hover {
+  border-color: var(--line-strong);
+  color: var(--lime);
 }
 
 .breadcrumb {
@@ -403,7 +538,10 @@ textarea::placeholder {
   box-shadow: var(--shadow-glow);
 }
 
-/* Hero */
+
+/* =========================================================
+   6. HERO
+   ========================================================= */
 .hero-row {
   display: flex;
   justify-content: space-between;
@@ -487,7 +625,111 @@ textarea::placeholder {
   color: var(--text);
 }
 
-/* Briefing */
+
+/* =========================================================
+   7. MODE TOGGLE
+   ========================================================= */
+.mode-toggle-wrap {
+  margin-bottom: 28px;
+}
+
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 8px;
+  background: rgba(20, 22, 15, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  position: relative;
+}
+
+.mode-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-option::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.mode-option:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--line);
+}
+
+.mode-option.active {
+  background: var(--panel-2);
+  border-color: var(--line-strong);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mode-option.active::before {
+  opacity: 0.05;
+}
+
+.mode-option-label {
+  font: 10px var(--mono);
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.mode-option.active .mode-option-label {
+  color: var(--lime);
+}
+
+.mode-option-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.mode-option.active .mode-option-desc {
+  color: var(--text);
+}
+
+.mode-option.active::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 12px rgba(200, 255, 61, 0.6);
+}
+
+
+/* =========================================================
+   8. BRIEFING PANEL
+   ========================================================= */
 .briefing-panel {
   background: rgba(20, 22, 15, 0.6);
   backdrop-filter: blur(20px);
@@ -504,7 +746,11 @@ textarea::placeholder {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at top left, rgba(200, 255, 61, 0.06), transparent 60%);
+  background: radial-gradient(
+    ellipse at top left,
+    rgba(200, 255, 61, 0.06),
+    transparent 60%
+  );
   pointer-events: none;
 }
 
@@ -555,6 +801,10 @@ textarea::placeholder {
   align-items: stretch;
   margin-bottom: 24px;
   position: relative;
+}
+
+.profile-grid-single {
+  grid-template-columns: 1fr;
 }
 
 .profile-form {
@@ -649,6 +899,8 @@ textarea::placeholder {
   line-height: 1.55;
   font-family: var(--sans);
   font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .briefing-footer {
@@ -705,7 +957,9 @@ textarea::placeholder {
   cursor: pointer;
 }
 
-/* Botões */
+/* =========================================================
+   9. BOTÕES
+   ========================================================= */
 .button-primary,
 .button-secondary {
   display: inline-flex;
@@ -721,6 +975,7 @@ textarea::placeholder {
   white-space: nowrap;
   transition: all 0.2s ease;
   border: 0;
+  cursor: pointer;
 }
 
 .button-primary {
@@ -754,7 +1009,10 @@ textarea::placeholder {
   align-items: center;
 }
 
-/* Progress */
+
+/* =========================================================
+   10. PROGRESS / ERROR / EMPTY
+   ========================================================= */
 .progress-panel {
   margin-bottom: 24px;
   padding: 20px;
@@ -896,7 +1154,10 @@ textarea::placeholder {
   white-space: nowrap;
 }
 
-/* Report header */
+
+/* =========================================================
+   11. REPORT HEADER
+   ========================================================= */
 .report-header {
   display: flex;
   justify-content: space-between;
@@ -930,7 +1191,10 @@ textarea::placeholder {
   color: #ffb38f;
 }
 
-/* Overview */
+
+/* =========================================================
+   12. OVERVIEW GRID
+   ========================================================= */
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -978,7 +1242,11 @@ textarea::placeholder {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.15), transparent 60%);
+  background: radial-gradient(
+    ellipse at top right,
+    rgba(255, 255, 255, 0.15),
+    transparent 60%
+  );
   pointer-events: none;
 }
 
@@ -1029,16 +1297,6 @@ textarea::placeholder {
   font-weight: 600;
 }
 
-.lead-bar {
-  margin-top: 12px;
-  background: rgba(10, 11, 8, 0.15);
-}
-
-.lead-bar span {
-  background: #0a0b08;
-}
-
-/* Ranking */
 .bar {
   height: 6px;
   background: var(--panel-3);
@@ -1054,6 +1312,19 @@ textarea::placeholder {
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.lead-bar {
+  margin-top: 12px;
+  background: rgba(10, 11, 8, 0.15);
+}
+
+.lead-bar span {
+  background: #0a0b08;
+}
+
+
+/* =========================================================
+   13. RANKING
+   ========================================================= */
 .tiny-code {
   color: var(--muted);
   font-family: var(--mono);
@@ -1136,7 +1407,10 @@ textarea::placeholder {
   color: var(--lime);
 }
 
-/* Pilares */
+
+/* =========================================================
+   14. PILARES
+   ========================================================= */
 .pillar-head,
 .pillar-row {
   display: grid;
@@ -1187,7 +1461,14 @@ textarea::placeholder {
   color: var(--text-dim);
 }
 
-/* Oportunidades */
+.pillar-row-single {
+  grid-template-columns: 1.4fr 1fr;
+}
+
+
+/* =========================================================
+   15. OPORTUNIDADES
+   ========================================================= */
 .opportunities-card {
   grid-column: span 2;
 }
@@ -1251,7 +1532,10 @@ textarea::placeholder {
   color: var(--text-dim);
 }
 
-/* Comparação detalhada */
+
+/* =========================================================
+   16. COMPARAÇÃO DETALHADA
+   ========================================================= */
 .comparison-detail {
   padding: 24px;
   background: var(--panel);
@@ -1263,6 +1547,12 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.comparison-profiles-single {
+  grid-template-columns: 1fr;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .detail-profile {
@@ -1295,7 +1585,7 @@ textarea::placeholder {
   font-size: 34px;
   color: var(--lime);
   letter-spacing: -1.5px;
-   line-height: 1;
+  line-height: 1;
   font-weight: 600;
 }
 
@@ -1390,7 +1680,9 @@ textarea::placeholder {
   border-left: 2px solid var(--line-strong);
 }
 
-/* Actions section */
+/* =========================================================
+   17. ACTIONS SECTION
+   ========================================================= */
 .actions-section {
   padding: 28px;
   background: var(--panel);
@@ -1433,7 +1725,10 @@ textarea::placeholder {
   align-self: flex-start;
 }
 
-/* Action Plan Tabs */
+
+/* =========================================================
+   18. ACTION PLAN TABS
+   ========================================================= */
 .action-tabs {
   display: flex;
   flex-direction: column;
@@ -1539,7 +1834,10 @@ textarea::placeholder {
   color: var(--text);
 }
 
-/* Action cards */
+
+/* =========================================================
+   19. ACTION CARDS
+   ========================================================= */
 .action-list {
   display: flex;
   flex-direction: column;
@@ -1572,6 +1870,9 @@ textarea::placeholder {
   padding: 20px 22px;
   color: var(--text);
   font-family: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
 
 .action-number {
@@ -1758,7 +2059,10 @@ textarea::placeholder {
   line-height: 1.4;
 }
 
-/* Footnotes & caveats */
+
+/* =========================================================
+   20. FOOTNOTES & CAVEATS
+   ========================================================= */
 .report-footnotes {
   display: flex;
   align-items: center;
@@ -1799,6 +2103,8 @@ textarea::placeholder {
   white-space: nowrap;
   transition: background 0.15s ease;
   font-weight: 500;
+  border: 0;
+  cursor: pointer;
 }
 
 .text-button:hover {
@@ -1829,7 +2135,10 @@ textarea::placeholder {
   margin: 6px 0;
 }
 
-/* Page footer */
+
+/* =========================================================
+   21. FOOTER
+   ========================================================= */
 .page-footer {
   border-top: 1px solid var(--line);
   margin-top: 40px;
@@ -1849,7 +2158,10 @@ textarea::placeholder {
   margin-left: 6px;
 }
 
-/* Modal */
+
+/* =========================================================
+   22. MODAL
+   ========================================================= */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1923,6 +2235,8 @@ textarea::placeholder {
   padding: 12px 14px;
   font-family: var(--sans);
   font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .modal-note {
@@ -1951,7 +2265,10 @@ textarea::placeholder {
   margin-top: 8px;
 }
 
-/* Spinner */
+
+/* =========================================================
+   23. SPINNER
+   ========================================================= */
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -1960,25 +2277,89 @@ textarea::placeholder {
   to { transform: rotate(360deg); }
 }
 
+
 /* =========================================================
-   PRINT VIEW — escondido na tela, visível na impressão
+   24. PRINT VIEW — esconde na tela, mostra só na impressão
    ========================================================= */
 #print-report {
   display: none !important;
 }
 
-@media print {
-  #print-report {
-    display: block !important;
+
+/* =========================================================
+   25. RESPONSIVE — TABLET (≤ 1100px)
+   ========================================================= */
+@media (max-width: 1100px) {
+  .sidebar {
+    width: 220px;
+  }
+  .main-canvas {
+    margin-left: 220px;
+  }
+  .page-content {
+    padding: 28px 22px;
+  }
+  .topbar {
+    padding: 0 22px;
+  }
+  .briefing-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .briefing-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .profile-grid {
+    gap: 8px;
+  }
+  .profile-form {
+    padding: 14px;
+  }
+  .system-status {
+    display: none;
   }
 }
 
+
 /* =========================================================
-   MOBILE
+   26. RESPONSIVE — MOBILE (≤ 900px)
    ========================================================= */
 @media (max-width: 900px) {
+  /* Sidebar vira drawer lateral */
   .sidebar {
-    display: none;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 280px;
+    z-index: 60;
+    box-shadow: 4px 0 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .mobile-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 55;
+    border: 0;
+    cursor: pointer;
+  }
+
+  /* Botão hamburger aparece */
+  .menu-toggle {
+    display: flex;
   }
 
   .main-canvas {
@@ -1986,20 +2367,20 @@ textarea::placeholder {
   }
 
   .page-content {
-    padding: 20px 16px 110px;
+    padding: 20px 16px 60px;
   }
 
   .topbar {
     height: 56px;
-    padding: 0 16px;
+    padding: 0 14px;
   }
 
-  .menu-toggle {
-    display: none;
+  .breadcrumb {
+    font-size: 11px;
   }
 
-  .system-status {
-    display: none;
+  .topbar-right {
+    gap: 8px;
   }
 
   .avatar {
@@ -2013,56 +2394,26 @@ textarea::placeholder {
     height: 34px;
   }
 
-  .side-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    flex-direction: row;
-    background: rgba(10, 11, 8, 0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--line);
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
-    gap: 4px;
-    z-index: 50;
-    justify-content: space-around;
+  /* Toggle */
+  .mode-toggle {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 6px;
   }
 
-  .side-nav .nav-caption {
-    display: none;
+  .mode-option {
+    padding: 14px 16px;
   }
 
-  .side-nav button {
-    flex: 1;
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px 4px;
-    font-size: 10px;
-    text-align: center;
-    border-radius: var(--r-md);
-    justify-content: center;
-    min-height: 54px;
+  .mode-option.active::after {
+    right: 16px;
   }
 
-  .side-nav button.active::before {
-    display: none;
+  .mode-option-desc {
+    font-size: 11px;
   }
 
-  .side-nav button.active {
-    color: var(--lime);
-    background: transparent;
-  }
-
-  .side-nav button.active svg {
-    color: var(--lime);
-  }
-
-  .nav-key {
-    display: none;
-  }
-
+  /* Hero */
   .hero-row {
     flex-direction: column;
     align-items: flex-start;
@@ -2083,6 +2434,7 @@ textarea::placeholder {
     display: none;
   }
 
+  /* Briefing */
   .briefing-panel {
     padding: 20px 16px;
     border-radius: var(--r-lg);
@@ -2143,6 +2495,7 @@ textarea::placeholder {
     font-size: 12px;
   }
 
+  /* Report */
   .report-header {
     flex-direction: column;
     align-items: stretch;
@@ -2171,6 +2524,7 @@ textarea::placeholder {
     font-size: 52px;
   }
 
+  /* Comparação */
   .comparison-detail {
     padding: 16px;
   }
@@ -2189,6 +2543,7 @@ textarea::placeholder {
     gap: 12px;
   }
 
+  /* Actions */
   .actions-section {
     padding: 18px;
   }
@@ -2226,6 +2581,7 @@ textarea::placeholder {
     grid-column: span 1;
   }
 
+  /* Empty */
   .empty-state {
     flex-direction: column;
     text-align: left;
@@ -2237,6 +2593,7 @@ textarea::placeholder {
     display: none;
   }
 
+  /* Footnotes */
   .report-footnotes {
     flex-direction: column;
     align-items: stretch;
@@ -2249,6 +2606,7 @@ textarea::placeholder {
     padding: 12px;
   }
 
+  /* Modal */
   .modal-backdrop {
     align-items: flex-end;
     padding: 0;
@@ -2271,54 +2629,50 @@ textarea::placeholder {
   }
 }
 
+
+/* =========================================================
+   27. RESPONSIVE — MOBILE PEQUENO (≤ 480px)
+   ========================================================= */
 @media (max-width: 480px) {
   .page-content {
-    padding: 16px 12px 110px;
+    padding: 16px 12px 60px;
   }
-
   .topbar {
     padding: 0 12px;
   }
-
   .hero-row h1 {
     font-size: 28px;
     letter-spacing: -1.2px;
   }
-
   .briefing-panel {
     padding: 18px 14px;
   }
-
   .profile-form {
     padding: 14px;
     gap: 12px;
   }
-
   .action-section-intro h3 {
     font-size: 22px;
   }
-
   .action-tab strong {
     font-size: 15px;
   }
-
   .caveats {
     font-size: 11px;
   }
-
   .opportunity-row {
     grid-template-columns: 28px 1fr;
     gap: 8px;
   }
-
   .opportunity-row .impact {
     grid-column: 2;
     justify-self: start;
   }
 }
 
+
 /* =========================================================
-   PRINT MEDIA — PDF limpo
+   28. PRINT MEDIA — PDF limpo
    ========================================================= */
 @media print {
   @page {
@@ -2342,6 +2696,7 @@ textarea::placeholder {
   }
 
   #print-report {
+    display: block !important;
     position: absolute;
     top: 0;
     left: 0;
@@ -2553,11 +2908,6 @@ textarea::placeholder {
     break-inside: avoid;
   }
 
-  #print-report .print-list li:last-child,
-  #print-report .print-actions li:last-child {
-    border-bottom: 0;
-  }
-
   #print-report .print-list strong,
   #print-report .print-action-head strong {
     font-size: 11px;
@@ -2647,8 +2997,9 @@ textarea::placeholder {
   }
 }
 
+
 /* =========================================================
-   REDUCED MOTION
+   29. REDUCED MOTION
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -2657,300 +3008,5 @@ textarea::placeholder {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-/* =========================================================
-   MODE TOGGLE — single / compare
-   ========================================================= */
-.mode-toggle-wrap {
-  margin-bottom: 28px;
-}
-
-.mode-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 8px;
-  background: rgba(20, 22, 15, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-xl);
-  position: relative;
-}
-
-.mode-option {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px 20px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--r-lg);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  color: inherit;
-  text-align: left;
-  position: relative;
-  overflow: hidden;
-}
-
-.mode-option::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--gradient-accent);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-}
-
-.mode-option:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.02);
-  border-color: var(--line);
-}
-
-.mode-option.active {
-  background: var(--panel-2);
-  border-color: var(--line-strong);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-}
-
-.mode-option.active::before {
-  opacity: 0.05;
-}
-
-.mode-option-label {
-  font: 10px var(--mono);
-  letter-spacing: 1.4px;
-  color: var(--muted);
-  text-transform: uppercase;
-  position: relative;
-  transition: color 0.2s ease;
-}
-
-.mode-option.active .mode-option-label {
-  color: var(--lime);
-}
-
-.mode-option-desc {
-  font-size: 12px;
-  color: var(--text-dim);
-  line-height: 1.4;
-  position: relative;
-  transition: color 0.2s ease;
-}
-
-.mode-option.active .mode-option-desc {
-  color: var(--text);
-}
-
-/* Ícone indicador de "selecionado" com círculo */
-.mode-option.active::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--lime);
-  box-shadow: 0 0 12px rgba(200, 255, 61, 0.6);
-}
-
-/* =========================================================
-   AJUSTES — layouts single vs compare
-   ========================================================= */
-.profile-grid-single {
-  grid-template-columns: 1fr;
-}
-
-.pillar-row-single {
-  grid-template-columns: 1.4fr 1fr;
-}
-
-.comparison-profiles-single {
-  grid-template-columns: 1fr;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-/* =========================================================
-   MOBILE — toggle
-   ========================================================= */
-@media (max-width: 900px) {
-  .mode-toggle-wrap {
-    margin-bottom: 20px;
-  }
-
-  .mode-toggle {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 6px;
-  }
-
-  .mode-option {
-    padding: 14px 16px;
-  }
-
-  .mode-option.active::after {
-    right: 16px;
-  }
-
-  .mode-option-desc {
-    font-size: 11px;
-  }
-}
-
-/* =========================================================
-   Side nav — Desktop vs Mobile
-   ========================================================= */
-.side-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0 14px;
-}
-
-.side-nav button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  text-align: left;
-  font-size: 13px;
-  color: var(--text-dim);
-  border-radius: var(--r-md);
-  transition: background 0.15s ease, color 0.15s ease;
-  position: relative;
-  font-weight: 500;
-  background: transparent;
-  border: 0;
-}
-
-.side-nav button:hover {
-  background: var(--panel-2);
-  color: var(--text);
-}
-
-.side-nav button.active {
-  background: var(--panel-3);
-  color: var(--text);
-}
-
-.side-nav button.active::before {
-  content: "";
-  position: absolute;
-  left: -14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  background: var(--gradient-accent);
-  border-radius: 0 2px 2px 0;
-}
-
-.side-nav button.active svg {
-  color: var(--lime);
-}
-
-.nav-key {
-  margin-left: auto;
-  font: 9px var(--mono);
-  color: var(--muted);
-  background: rgba(255, 255, 255, 0.03);
-  padding: 2px 6px;
-  border-radius: var(--r-sm);
-}
-
-.nav-caption {
-  font: 9px var(--mono);
-  letter-spacing: 1.4px;
-  color: var(--muted);
-  padding: 12px 10px 8px;
-  text-transform: uppercase;
-}
-
-.nav-caption-spaced {
-  margin-top: 24px;
-}
-
-.side-nav button span:not(.nav-key) {
-  display: none; /* esconde o texto no desktop, já que o ícone + label completa */
-}
-
-/* =========================================================
-   Mobile — bottom navigation
-   ========================================================= */
-@media (max-width: 900px) {
-  .side-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    flex-direction: row;
-    background: rgba(10, 11, 8, 0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--line);
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
-    gap: 4px;
-    z-index: 50;
-    justify-content: space-around;
-    margin: 0;
-  }
-
-  .side-nav .nav-caption {
-    display: none;
-  }
-
-  .side-nav button {
-    flex: 1;
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px 4px;
-    font-size: 10px;
-    text-align: center;
-    border-radius: var(--r-md);
-    justify-content: center;
-    min-height: 54px;
-    background: transparent;
-  }
-
-  .side-nav button.active::before {
-    display: none;
-  }
-
-  .side-nav button.active {
-    color: var(--lime);
-    background: transparent;
-  }
-
-  .side-nav button.active svg {
-    color: var(--lime);
-  }
-
-  .side-nav button span:not(.nav-key) {
-    display: inline; /* mostra o texto no mobile */
-  }
-
-  .nav-key {
-    display: none;
-  }
-}
-
-/* =========================================================
-   Desktop — esconde a bottom nav (usa o sidebar)
-   ========================================================= */
-@media (min-width: 901px) {
-  .side-nav {
-    position: absolute;
-    top: 120px;
-    left: 0;
-    width: 240px;
-    padding: 0 14px;
   }
 }
