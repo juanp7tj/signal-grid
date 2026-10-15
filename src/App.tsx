@@ -808,7 +808,7 @@ export default function App() {
     <div className="app-shell">
       {report && <ReportPrintView report={report} />}
 
-      <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
+            <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
           <div className="brand-mark">
             <span>//</span>SG
