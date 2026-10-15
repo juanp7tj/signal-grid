@@ -1,6 +1,8 @@
 /* =========================================================
-   Entrada
+   Signal Grid — Tipos
    ========================================================= */
+
+/* ---------- Entrada ---------- */
 export type ProfileInput = {
   name: string;
   url: string;
@@ -9,9 +11,7 @@ export type ProfileInput = {
   objective: string;
 };
 
-/* =========================================================
-   Score / perfil
-   ========================================================= */
+/* ---------- Score / perfil ---------- */
 export type ProfileScore = {
   profileName: string;
   overall: number;
@@ -24,15 +24,12 @@ export type ProfileScore = {
   evidence: string[];
 };
 
-/* =========================================================
-   Enums utilitários
-   ========================================================= */
+/* ---------- Enums ---------- */
 export type Priority = "Alta" | "Média" | "Baixa";
 export type Impact = "Alto" | "Médio" | "Baixo";
+export type AnalysisMode = "single" | "compare";
 
-/* =========================================================
-   Plano de ação — 🔥 agora com deadline, owner e kpi
-   ========================================================= */
+/* ---------- Plano de ação ---------- */
 export type ActionItem = {
   priority: Priority;
   title: string;
@@ -44,33 +41,30 @@ export type ActionItem = {
   kpi: string;
 };
 
-/* =========================================================
-   Oportunidades
-   ========================================================= */
+/* ---------- Oportunidades ---------- */
 export type Opportunity = {
   title: string;
   description: string;
   impact: Impact;
 };
 
-/* =========================================================
-   Relatório completo
-   ========================================================= */
+/* ---------- Relatório ---------- */
 export type AnalysisReport = {
   title: string;
   summary: string;
-  ranking: string[];
+  analysisMode: AnalysisMode;
+  ranking?: string[];
   profiles: ProfileScore[];
   opportunities: Opportunity[];
-  actionPlan: ActionItem[];
+  actionPlan?: ActionItem[];
+  actionPlanA?: ActionItem[];
+  actionPlanB?: ActionItem[];
   caveats: string[];
   generatedAt: string;
   mode: "ollama" | "openai-compatible" | "demo";
 };
 
-/* =========================================================
-   Configurações da sessão
-   ========================================================= */
+/* ---------- Settings ---------- */
 export type Settings = {
   language: string;
   tone: string;

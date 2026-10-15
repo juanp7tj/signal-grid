@@ -5,7 +5,13 @@ import {
   LoaderCircle, Menu, Settings2, ShieldCheck, SlidersHorizontal, Sparkles,
   Target, TrendingUp, X
 } from "lucide-react";
-import type { ActionItem, AnalysisReport, ProfileInput, Settings } from "./types";
+import type {
+  ActionItem,
+  AnalysisMode,
+  AnalysisReport,
+  ProfileInput,
+  Settings,
+} from "./types";
 
 /* =========================================================
    Constantes
@@ -28,10 +34,14 @@ const initialB: ProfileInput = {
   objective: "Gerar leads",
 };
 
-const demoReport: AnalysisReport = {
-  title: "Diagnóstico competitivo",
+/* =========================================================
+   Demo report — modo comparação
+   ========================================================= */
+const demoCompare: AnalysisReport = {
+  title: "Diagnóstico competitivo: Perfil A vs Perfil B",
   summary:
-    "Relatório demonstrativo para visualizar a interface. Os dados e as notas abaixo são ilustrativos, não representam métricas reais dos perfis.",
+    "Relatório demonstrativo. Perfil A lidera com foco em conteúdo educativo, enquanto Perfil B tem oportunidade clara em consistência e prova social.",
+  analysisMode: "compare",
   ranking: ["Perfil A", "Perfil B"],
   profiles: [
     {
@@ -40,51 +50,35 @@ const demoReport: AnalysisReport = {
       strengths: [
         "Linha editorial reconhecível",
         "Conteúdo educativo com potencial de salvamento",
-        "Identidade visual relativamente consistente",
       ],
       weaknesses: [
         "Chamadas para ação pouco específicas",
-        "Pouca evidência pública para avaliar conversão",
+        "Pouca prova social visível",
       ],
-      evidence: [
-        "Exemplo ilustrativo: avaliar os 12 posts mais recentes",
-        "Exemplo ilustrativo: observar formatos e CTAs",
-      ],
+      evidence: ["Exemplo ilustrativo: avaliar os 12 posts mais recentes"],
     },
     {
       profileName: "Perfil B",
       overall: 6.9, content: 7.1, consistency: 6.5, positioning: 7.4, engagement: 6.7,
-      strengths: [
-        "Tema central compreensível",
-        "Possibilidade de aproveitar tendências do nicho",
-      ],
-      weaknesses: [
-        "Pilares de conteúdo podem estar dispersos",
-        "Diferencial de marca pouco explícito",
-      ],
-      evidence: [
-        "Exemplo ilustrativo: conferir frequência de publicação",
-        "Exemplo ilustrativo: comparar formatos recentes",
-      ],
+      strengths: ["Tema central compreensível"],
+      weaknesses: ["Pilares dispersos", "Diferencial pouco explícito"],
+      evidence: ["Exemplo ilustrativo: conferir frequência"],
     },
   ],
   opportunities: [
     {
       title: "Transformar dúvidas em séries",
-      description:
-        "Organizar perguntas recorrentes do público em conteúdos sequenciais, com uma promessa clara por publicação.",
+      description: "Organizar perguntas recorrentes em conteúdos sequenciais.",
       impact: "Alto",
     },
     {
       title: "Padronizar chamadas para ação",
-      description:
-        "Definir uma ação principal por conteúdo e relacioná-la ao objetivo comercial.",
+      description: "Definir uma ação principal por conteúdo.",
       impact: "Alto",
     },
     {
-      title: "Criar uma rotina de testes",
-      description:
-        "Comparar formatos e temas usando métricas disponíveis ao administrador da conta.",
+      title: "Criar rotina de testes",
+      description: "Comparar formatos e temas usando métricas disponíveis.",
       impact: "Médio",
     },
   ],
@@ -93,11 +87,83 @@ const demoReport: AnalysisReport = {
       priority: "Alta",
       title: "Mapear os conteúdos de melhor desempenho",
       reason: "Criar uma linha de base antes de alterar a estratégia.",
-      steps: [
-        "Listar os 12 conteúdos recentes",
-        "Registrar formato, tema e CTA",
-        "Anotar métricas públicas ou fornecidas pelo cliente",
+      steps: ["Listar os 12 conteúdos recentes", "Registrar formato e CTA"],
+      metric: "Planilha de auditoria preenchida",
+      deadline: "7 dias",
+      owner: "Social Media",
+      kpi: "12 conteúdos classificados",
+    },
+  ],
+  actionPlanB: [
+    {
+      priority: "Alta",
+      title: "Executar testes de CTA",
+      reason: "Descobrir quais chamadas levam à ação desejada.",
+      steps: ["Criar duas variações de CTA", "Medir resultados"],
+      metric: "Resultados documentados",
+      deadline: "30 dias",
+      owner: "Social Media",
+      kpi: "CTA vencedor com margem ≥ 20%",
+    },
+  ],
+  caveats: [
+    "Modo demonstrativo: as notas não são baseadas em métricas reais.",
+    "O MVP não acessa Instagram nem realiza scraping.",
+  ],
+  generatedAt: new Date().toISOString(),
+  mode: "demo",
+};
+
+/* =========================================================
+   Demo report — modo único
+   ========================================================= */
+const demoSingle: AnalysisReport = {
+  title: "Diagnóstico estratégico: Perfil",
+  summary:
+    "Relatório demonstrativo de um único perfil. O conteúdo é ilustrativo e serve apenas para visualizar a interface.",
+  analysisMode: "single",
+  profiles: [
+    {
+      profileName: "Perfil",
+      overall: 7.4, content: 8.0, consistency: 6.8, positioning: 7.6, engagement: 7.1,
+      strengths: [
+        "Linha editorial reconhecível com foco em conteúdo educativo",
+        "Frequência estável de publicações",
+        "Identidade visual consistente entre os posts",
       ],
+      weaknesses: [
+        "CTA pouco específico em posts de conversão",
+        "Prova social limitada",
+      ],
+      evidence: [
+        "Exemplo ilustrativo: avaliar os 12 posts mais recentes",
+        "Exemplo ilustrativo: observar formatos e CTAs",
+      ],
+    },
+  ],
+  opportunities: [
+    {
+      title: "Transformar dúvidas em séries",
+      description: "Organizar perguntas recorrentes em conteúdos sequenciais.",
+      impact: "Alto",
+    },
+    {
+      title: "Padronizar chamadas para ação",
+      description: "Definir uma ação principal por conteúdo.",
+      impact: "Alto",
+    },
+    {
+      title: "Criar rotina de testes",
+      description: "Comparar formatos e temas com métricas disponíveis.",
+      impact: "Médio",
+    },
+  ],
+  actionPlan: [
+    {
+      priority: "Alta",
+      title: "Mapear os conteúdos de melhor desempenho",
+      reason: "Criar uma linha de base antes de alterar a estratégia.",
+      steps: ["Listar os 12 conteúdos recentes", "Registrar formato e CTA"],
       metric: "Planilha de auditoria preenchida",
       deadline: "7 dias",
       owner: "Social Media",
@@ -106,51 +172,27 @@ const demoReport: AnalysisReport = {
     {
       priority: "Alta",
       title: "Definir três pilares editoriais",
-      reason: "Aumentar a clareza da mensagem e a repetibilidade da produção.",
-      steps: [
-        "Escolher três temas ligados ao posicionamento",
-        "Criar duas pautas por tema",
-        "Associar cada pauta a um objetivo",
-      ],
+      reason: "Aumentar clareza e repetibilidade da produção.",
+      steps: ["Escolher três temas", "Criar duas pautas por tema"],
       metric: "Seis pautas aprovadas",
       deadline: "14 dias",
       owner: "Estrategista",
       kpi: "6 pautas no calendário",
     },
-  ],
-  actionPlanB: [
     {
-      priority: "Alta",
+      priority: "Média",
       title: "Executar testes de CTA",
-      reason: "Descobrir quais chamadas levam à ação desejada.",
-      steps: [
-        "Criar duas variações de CTA",
-        "Manter o tema comparável",
-        "Revisar resultados após o período definido",
-      ],
-      metric: "Resultados registrados por variação",
+      reason: "Descobrir quais chamadas levam à ação.",
+      steps: ["Criar duas variações", "Medir resultados"],
+      metric: "Resultados documentados",
       deadline: "30 dias",
       owner: "Social Media",
       kpi: "CTA vencedor com margem ≥ 20%",
     },
-    {
-      priority: "Média",
-      title: "Padronizar identidade visual",
-      reason: "Marca reconhecível aumenta memorização e alcance orgânico.",
-      steps: [
-        "Definir paleta e fontes",
-        "Aplicar em 10 posts seguintes",
-        "Medir alcance médio antes/depois",
-      ],
-      metric: "Paleta aplicada em 10 posts",
-      deadline: "30 dias",
-      owner: "Designer + Social Media",
-      kpi: "+10% de alcance médio em 30 dias",
-    },
   ],
   caveats: [
-    "Modo demonstrativo: substitua este relatório por uma análise do agente.",
-    "Links de Instagram não são raspados automaticamente. Informe evidências públicas ou métricas fornecidas pelo cliente para uma avaliação mais fundamentada.",
+    "Modo demonstrativo: as notas não são baseadas em métricas reais.",
+    "O MVP não acessa Instagram nem realiza scraping.",
   ],
   generatedAt: new Date().toISOString(),
   mode: "demo",
@@ -183,7 +225,7 @@ function formatDate(iso: string): string {
 }
 
 /* =========================================================
-   Subcomponentes
+   Subcomponentes básicos
    ========================================================= */
 function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
@@ -336,7 +378,43 @@ function ActionCard({ item, index }: { item: ActionItem; index: number }) {
 }
 
 /* =========================================================
-   Action Plan Tabs — plano separado por perfil
+   Toggle de modo (topo da página)
+   ========================================================= */
+function ModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: AnalysisMode;
+  onChange: (m: AnalysisMode) => void;
+}) {
+  return (
+    <section className="mode-toggle-wrap">
+      <div className="mode-toggle">
+        <button
+          type="button"
+          className={`mode-option ${mode === "single" ? "active" : ""}`}
+          onClick={() => onChange("single")}
+          aria-pressed={mode === "single"}
+        >
+          <span className="mode-option-label">ANÁLISE ÚNICA</span>
+          <span className="mode-option-desc">1 perfil · diagnóstico individual</span>
+        </button>
+        <button
+          type="button"
+          className={`mode-option ${mode === "compare" ? "active" : ""}`}
+          onClick={() => onChange("compare")}
+          aria-pressed={mode === "compare"}
+        >
+          <span className="mode-option-label">COMPARAÇÃO</span>
+          <span className="mode-option-desc">2 perfis · diagnóstico competitivo</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/* =========================================================
+   Action Plan Tabs (só modo comparação)
    ========================================================= */
 function ActionPlanTabs({ report }: { report: AnalysisReport }) {
   const [tab, setTab] = useState<"A" | "B">("A");
@@ -344,7 +422,10 @@ function ActionPlanTabs({ report }: { report: AnalysisReport }) {
   const profileA = report.profiles[0];
   const profileB = report.profiles[1];
 
-  const items = tab === "A" ? report.actionPlanA : report.actionPlanB;
+  const planA = report.actionPlanA ?? [];
+  const planB = report.actionPlanB ?? [];
+
+  const items = tab === "A" ? planA : planB;
   const profileName = tab === "A" ? profileA?.profileName : profileB?.profileName;
 
   return (
@@ -353,22 +434,20 @@ function ActionPlanTabs({ report }: { report: AnalysisReport }) {
         <button
           className={`action-tab ${tab === "A" ? "active" : ""}`}
           onClick={() => setTab("A")}
+          type="button"
         >
           <span className="action-tab-label">PLANO A</span>
           <strong>{profileA?.profileName || "Perfil A"}</strong>
-          <span className="action-tab-count">
-            {report.actionPlanA.length} ações
-          </span>
+          <span className="action-tab-count">{planA.length} ações</span>
         </button>
         <button
           className={`action-tab ${tab === "B" ? "active" : ""}`}
           onClick={() => setTab("B")}
+          type="button"
         >
           <span className="action-tab-label">PLANO B</span>
           <strong>{profileB?.profileName || "Perfil B"}</strong>
-          <span className="action-tab-count">
-            {report.actionPlanB.length} ações
-          </span>
+          <span className="action-tab-count">{planB.length} ações</span>
         </button>
       </div>
 
@@ -380,11 +459,7 @@ function ActionPlanTabs({ report }: { report: AnalysisReport }) {
         ) : (
           <div className="action-list">
             {items.map((item, i) => (
-              <ActionCard
-                item={item}
-                index={i}
-                key={`${tab}-${item.title}-${i}`}
-              />
+              <ActionCard item={item} index={i} key={`${tab}-${i}-${item.title}`} />
             ))}
           </div>
         )}
@@ -394,10 +469,11 @@ function ActionPlanTabs({ report }: { report: AnalysisReport }) {
 }
 
 /* =========================================================
-   View de impressão (aparece só no PDF)
+   Report Print View (usado só na impressão)
    ========================================================= */
 function ReportPrintView({ report }: { report: AnalysisReport }) {
   const [leader, second] = report.profiles;
+  const single = report.analysisMode === "single";
 
   return (
     <div id="print-report" aria-hidden="true">
@@ -422,81 +498,123 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <p className="print-summary">{report.summary}</p>
       </section>
 
-      <section className="print-section">
-        <h2>01 · Visão geral</h2>
-        <div className="print-overview">
-          <div className="print-leader">
-            <small>PERFIL LÍDER</small>
-            <strong>{leader?.profileName ?? "—"}</strong>
-            <div className="print-score">
-              {leader?.overall.toFixed(1)}
-              <small>/10</small>
+      {/* Modo COMPARE — visão geral + pilares */}
+      {!single && (
+        <>
+          <section className="print-section">
+            <h2>01 · Visão geral</h2>
+            <div className="print-overview">
+              <div className="print-leader">
+                <small>PERFIL LÍDER</small>
+                <strong>{leader?.profileName ?? "—"}</strong>
+                <div className="print-score">
+                  {leader?.overall.toFixed(1)}
+                  <small>/10</small>
+                </div>
+                <p>
+                  Vantagem de{" "}
+                  <strong>
+                    {leader && second
+                      ? (leader.overall - second.overall).toFixed(1)
+                      : "0.0"}{" "}
+                    pts
+                  </strong>{" "}
+                  sobre {second?.profileName}.
+                </p>
+              </div>
+
+              <div className="print-rank">
+                <small>RANKING</small>
+                <ol>
+                  {(report.ranking ?? []).map((name, i) => {
+                    const p = report.profiles.find((x) => x.profileName === name);
+                    return (
+                      <li key={name}>
+                        <span className="print-rank-num">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <span>{name}</span>
+                        <strong>{p?.overall.toFixed(1)}</strong>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
             </div>
-            <p>
-              Vantagem de{" "}
-              <strong>
-                {leader && second
-                  ? (leader.overall - second.overall).toFixed(1)
-                  : "0.0"}{" "}
-                pts
-              </strong>{" "}
-              sobre {second?.profileName}.
-            </p>
-          </div>
+          </section>
 
-          <div className="print-rank">
-            <small>RANKING</small>
-            <ol>
-              {report.ranking.map((name, i) => {
-                const p = report.profiles.find((x) => x.profileName === name);
-                return (
-                  <li key={name}>
-                    <span className="print-rank-num">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span>{name}</span>
-                    <strong>{p?.overall.toFixed(1)}</strong>
+          <section className="print-section">
+            <h2>02 · Comparação por pilares</h2>
+            <table className="print-table">
+              <thead>
+                <tr>
+                  <th>Dimensão</th>
+                  <th>{report.profiles[0]?.profileName}</th>
+                  <th>{report.profiles[1]?.profileName}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    ["Conteúdo", "content"],
+                    ["Consistência", "consistency"],
+                    ["Posicionamento", "positioning"],
+                    ["Engajamento", "engagement"],
+                    ["Geral", "overall"],
+                  ] as const
+                ).map(([label, key]) => (
+                  <tr key={key}>
+                    <td>{label}</td>
+                    <td>{report.profiles[0]?.[key]?.toFixed(1) ?? "—"}</td>
+                    <td>{report.profiles[1]?.[key]?.toFixed(1) ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
+      )}
+
+      {/* Modo SINGLE — diagnóstico do perfil */}
+      {single && (
+        <section className="print-section">
+          <h2>01 · Diagnóstico do perfil</h2>
+          <div className="print-overview">
+            <div className="print-leader">
+              <small>PERFIL</small>
+              <strong>{leader?.profileName ?? "—"}</strong>
+              <div className="print-score">
+                {leader?.overall.toFixed(1)}
+                <small>/10</small>
+              </div>
+            </div>
+            <div className="print-rank">
+              <small>PILARES</small>
+              <ol>
+                {(
+                  [
+                    ["Conteúdo", "content"],
+                    ["Consistência", "consistency"],
+                    ["Posicionamento", "positioning"],
+                    ["Engajamento", "engagement"],
+                  ] as const
+                ).map(([label, key]) => (
+                  <li key={key}>
+                    <span className="print-rank-num">—</span>
+                    <span>{label}</span>
+                    <strong>{leader?.[key]?.toFixed(1) ?? "—"}</strong>
                   </li>
-                );
-              })}
-            </ol>
+                ))}
+              </ol>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section className="print-section">
-        <h2>02 · Comparação por pilares</h2>
-        <table className="print-table">
-          <thead>
-            <tr>
-              <th>Dimensão</th>
-              <th>{report.profiles[0]?.profileName}</th>
-              <th>{report.profiles[1]?.profileName}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(
-              [
-                ["Conteúdo", "content"],
-                ["Consistência", "consistency"],
-                ["Posicionamento", "positioning"],
-                ["Engajamento", "engagement"],
-                ["Geral", "overall"],
-              ] as const
-            ).map(([label, key]) => (
-              <tr key={key}>
-                <td>{label}</td>
-                <td>{report.profiles[0]?.[key]?.toFixed(1) ?? "—"}</td>
-                <td>{report.profiles[1]?.[key]?.toFixed(1) ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
+      {/* Oportunidades */}
       {report.opportunities.length > 0 && (
         <section className="print-section">
-          <h2>03 · Oportunidades prioritárias</h2>
+          <h2>{single ? "02" : "03"} · Oportunidades prioritárias</h2>
           <ol className="print-list">
             {report.opportunities.map((o, i) => (
               <li key={o.title}>
@@ -511,11 +629,15 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         </section>
       )}
 
+      {/* Plano de ação */}
       <section className="print-section">
-        <h2>04 · Plano de ação</h2>
+        <h2>{single ? "03" : "04"} · Plano de ação</h2>
         <ol className="print-actions">
-          {[...report.actionPlanA, ...report.actionPlanB].map((a, i) => (
-            <li key={a.title}>
+          {(single
+            ? report.actionPlan ?? []
+            : [...(report.actionPlanA ?? []), ...(report.actionPlanB ?? [])]
+          ).map((a, i) => (
+            <li key={`${a.title}-${i}`}>
               <div className="print-action-head">
                 <strong>
                   {String(i + 1).padStart(2, "0")} · {a.title}
@@ -570,6 +692,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
    App principal
    ========================================================= */
 export default function App() {
+  const [mode, setMode] = useState<AnalysisMode>("compare");
   const [profileA, setProfileA] = useState(initialA);
   const [profileB, setProfileB] = useState(initialB);
   const [report, setReport] = useState<AnalysisReport | null>(null);
@@ -588,9 +711,24 @@ export default function App() {
   const [demoMode, setDemoMode] = useState(false);
 
   const scoreDiff = useMemo(() => {
-    if (!report || report.profiles.length < 2) return 0;
+    if (
+      mode !== "compare" ||
+      !report ||
+      report.profiles.length < 2
+    ) {
+      return 0;
+    }
     return report.profiles[0].overall - report.profiles[1].overall;
-  }, [report]);
+  }, [report, mode]);
+
+  // Ao trocar de modo, limpa o relatório atual
+  function handleModeChange(next: AnalysisMode) {
+    if (next === mode) return;
+    setMode(next);
+    setReport(null);
+    setError("");
+    setProgress([]);
+  }
 
   async function analyze() {
     setError("");
@@ -598,8 +736,13 @@ export default function App() {
     setLoading(true);
     setProgress(["Validando briefing e URLs", "Preparando contexto estratégico"]);
 
-    if (!validInstagramUrl(profileA.url) || !validInstagramUrl(profileB.url)) {
-      setError("Informe duas URLs válidas de perfis do Instagram.");
+    if (!validInstagramUrl(profileA.url)) {
+      setError("Informe uma URL válida do Instagram.");
+      setLoading(false);
+      return;
+    }
+    if (mode === "compare" && !validInstagramUrl(profileB.url)) {
+      setError("Informe a URL do segundo perfil do Instagram.");
       setLoading(false);
       return;
     }
@@ -619,16 +762,19 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          analysisMode: mode,
           profileA,
-          profileB,
+          profileB: mode === "compare" ? profileB : null,
           settings,
           evidence,
           demoMode,
         }),
       });
+
       const data = await response.json();
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(data.error || "Não foi possível concluir a análise.");
+      }
       setReport(data as AnalysisReport);
       setActiveTab("overview");
       setProgress((p) => [
@@ -655,6 +801,8 @@ export default function App() {
   }
 
   const topScore = report?.profiles[0];
+  const single = report?.analysisMode === "single";
+  const compare = report?.analysisMode === "compare";
 
   return (
     <div className="app-shell">
@@ -702,7 +850,8 @@ export default function App() {
               setSidebarOpen(false);
             }}
           >
-            <Layers3 size={17} /> Comparar perfis <span className="nav-key">02</span>
+            <Layers3 size={17} /> {single ? "Perfil" : "Comparar perfis"}{" "}
+            <span className="nav-key">02</span>
           </button>
           <button
             className={activeTab === "actions" ? "active" : ""}
@@ -729,7 +878,7 @@ export default function App() {
             </div>
           </div>
           <div className="sidebar-foot">
-            <span>BUILD 1.0.0</span>
+            <span>BUILD 1.1.0</span>
             <span>PT-BR</span>
           </div>
         </div>
@@ -744,39 +893,6 @@ export default function App() {
       )}
 
       <main className="main-canvas">
-                <nav className="side-nav">
-          <span className="nav-caption">WORKSPACE</span>
-          <button
-            className={activeTab === "overview" ? "active" : ""}
-            onClick={() => {
-              setActiveTab("overview");
-              setSidebarOpen(false);
-            }}
-          >
-            <BarChart3 size={17} /> Visão geral <span className="nav-key">01</span>
-          </button>
-          <button
-            className={activeTab === "compare" ? "active" : ""}
-            onClick={() => {
-              setActiveTab("compare");
-              setSidebarOpen(false);
-            }}
-          >
-            <Layers3 size={17} /> Comparar perfis <span className="nav-key">02</span>
-          </button>
-          <button
-            className={activeTab === "actions" ? "active" : ""}
-            onClick={() => {
-              setActiveTab("actions");
-              setSidebarOpen(false);
-            }}
-          >
-            <Target size={17} /> Plano de ação <span className="nav-key">03</span>
-          </button>
-          <button onClick={() => setShowSettings(true)}>
-            <Settings2 size={17} /> Config
-          </button>
-        </nav>
         <header className="topbar">
           <div className="topbar-left">
             <button
@@ -790,7 +906,9 @@ export default function App() {
               Workspace <ChevronRight size={13} />{" "}
               <strong>
                 {activeTab === "compare"
-                  ? "Comparação"
+                  ? single
+                    ? "Perfil"
+                    : "Comparação"
                   : activeTab === "actions"
                   ? "Plano de ação"
                   : "Visão geral"}
@@ -813,27 +931,54 @@ export default function App() {
         </header>
 
         <div className="page-content">
+          {/* 🔥 TOGGLE DE MODO — primeira coisa visível */}
+          <ModeToggle mode={mode} onChange={handleModeChange} />
+
           <section className="hero-row">
             <div>
               <div className="eyebrow">
-                <span className="eyebrow-line" /> SOCIAL INTELLIGENCE / 001
+                <span className="eyebrow-line" />{" "}
+                {mode === "single"
+                  ? "SOCIAL INTELLIGENCE / DIAGNÓSTICO ÚNICO"
+                  : "SOCIAL INTELLIGENCE / COMPARAÇÃO"}
               </div>
               <h1>
-                Veja onde a vantagem
-                <br />
-                <em>está escondida.</em>
+                {mode === "single" ? (
+                  <>
+                    Um perfil sob
+                    <br />
+                    <em>análise profunda.</em>
+                  </>
+                ) : (
+                  <>
+                    Veja onde a vantagem
+                    <br />
+                    <em>está escondida.</em>
+                  </>
+                )}
               </h1>
               <p>
-                Compare posicionamento, conteúdo e oportunidades. Transforme
-                sinais em decisões de marketing.
+                {mode === "single"
+                  ? "Gere um diagnóstico completo de um perfil com forças, fraquezas, oportunidades e plano de ação."
+                  : "Compare posicionamento, conteúdo e oportunidades. Transforme sinais em decisões de marketing."}
               </p>
             </div>
             <div className="hero-stamp">
               <Activity size={18} />
               <span>
-                STRATEGIC
-                <br />
-                ANALYSIS
+                {mode === "single" ? (
+                  <>
+                    DEEP
+                    <br />
+                    ANALYSIS
+                  </>
+                ) : (
+                  <>
+                    STRATEGIC
+                    <br />
+                    ANALYSIS
+                  </>
+                )}
               </span>
               <strong>SG—01</strong>
             </div>
@@ -843,26 +988,42 @@ export default function App() {
             <div className="section-head">
               <div>
                 <span className="section-index">01 / BRIEFING</span>
-                <h2>Defina a comparação</h2>
-                <p>Informe os perfis e o contexto da análise.</p>
+                <h2>
+                  {mode === "single"
+                    ? "Descreva o perfil"
+                    : "Defina a comparação"}
+                </h2>
+                <p>
+                  {mode === "single"
+                    ? "Informe o perfil e o contexto da análise."
+                    : "Informe os dois perfis e o contexto da análise."}
+                </p>
               </div>
               <span className="required-note">* CAMPOS OBRIGATÓRIOS</span>
             </div>
 
-            <div className="profile-grid">
+            <div
+              className={`profile-grid ${
+                mode === "single" ? "profile-grid-single" : ""
+              }`}
+            >
               <ProfileForm
-                label="PERFIL A / REFERÊNCIA"
+                label={mode === "single" ? "PERFIL / ALVO" : "PERFIL A / REFERÊNCIA"}
                 profile={profileA}
                 onChange={setProfileA}
               />
-              <div className="versus">
-                VS<span>02</span>
-              </div>
-              <ProfileForm
-                label="PERFIL B / CONCORRENTE"
-                profile={profileB}
-                onChange={setProfileB}
-              />
+              {mode === "compare" && (
+                <>
+                  <div className="versus">
+                    VS<span>02</span>
+                  </div>
+                  <ProfileForm
+                    label="PERFIL B / CONCORRENTE"
+                    profile={profileB}
+                    onChange={setProfileB}
+                  />
+                </>
+              )}
             </div>
 
             <label className="evidence-label">
@@ -870,7 +1031,11 @@ export default function App() {
               <textarea
                 value={evidence}
                 onChange={(e) => setEvidence(e.target.value)}
-                placeholder="Cole aqui observações dos perfis, exemplos de posts, bio, frequência, métricas públicas ou dados fornecidos pelo cliente. URLs, sozinhas, não fornecem essas informações ao agente."
+                placeholder={
+                  mode === "single"
+                    ? "Cole observações sobre este perfil: frequência, formatos, tom, CTAs, prova social, bio. URLs sozinhas não fornecem essas informações."
+                    : "Cole observações dos dois perfis: frequência, formatos, tom, CTAs, prova social, bio. URLs sozinhas não fornecem essas informações."
+                }
               />
             </label>
 
@@ -903,7 +1068,11 @@ export default function App() {
                       <Sparkles size={16} />
                     )}
                   </span>
-                  {loading ? "ANALISANDO..." : "EXECUTAR COMPARAÇÃO"}
+                  {loading
+                    ? "ANALISANDO..."
+                    : mode === "single"
+                    ? "GERAR DIAGNÓSTICO"
+                    : "EXECUTAR COMPARAÇÃO"}
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -916,9 +1085,7 @@ export default function App() {
                 <LoaderCircle className="spin" size={19} />
                 <div>
                   <strong>Agente estratégico em execução</strong>
-                  <small>
-                    Montando diagnóstico com base no briefing fornecido.
-                  </small>
+                  <small>Montando diagnóstico com base no briefing fornecido.</small>
                 </div>
                 <span className="live-label">LIVE</span>
               </div>
@@ -951,11 +1118,15 @@ export default function App() {
               </div>
               <div>
                 <span className="eyebrow">AGUARDANDO INPUT</span>
-                <h3>Pronto para encontrar sinais.</h3>
+                <h3>
+                  {mode === "single"
+                    ? "Pronto para diagnosticar."
+                    : "Pronto para encontrar sinais."}
+                </h3>
                 <p>
-                  Preencha os perfis acima e execute a comparação. Se o
-                  provider estiver indisponível, ative o modo demonstrativo
-                  para testar a interface.
+                  {mode === "single"
+                    ? "Preencha o perfil acima e gere o diagnóstico. Se o provider estiver indisponível, ative o modo demonstrativo."
+                    : "Preencha os dois perfis e execute a comparação. Se o provider estiver indisponível, ative o modo demonstrativo."}
                 </p>
               </div>
               <div className="empty-index">SG / 001</div>
@@ -986,7 +1157,7 @@ export default function App() {
                 <div className="overview-grid">
                   <section className="metric-card lead-metric">
                     <div className="card-topline">
-                      <span>PERFIL EM DESTAQUE</span>
+                      <span>{single ? "PERFIL ANALISADO" : "PERFIL EM DESTAQUE"}</span>
                       <TrendingUp size={17} />
                     </div>
                     <div className="lead-name">
@@ -998,10 +1169,12 @@ export default function App() {
                     </div>
                     <div className="lead-bottom">
                       <span>ÍNDICE ESTRATÉGICO</span>
-                      <span className="delta">
-                        <ArrowUpRight size={14} />{" "}
-                        {Math.abs(scoreDiff).toFixed(1)} PTS
-                      </span>
+                      {compare && (
+                        <span className="delta">
+                          <ArrowUpRight size={14} />{" "}
+                          {Math.abs(scoreDiff).toFixed(1)} PTS
+                        </span>
+                      )}
                     </div>
                     <div className="bar lead-bar">
                       <span
@@ -1010,48 +1183,58 @@ export default function App() {
                     </div>
                   </section>
 
-                  <section className="metric-card ranking-card">
-                    <div className="card-topline">
-                      <span>RANKING</span>
-                      <span className="tiny-code">R / 02</span>
-                    </div>
-                    <div className="ranking-list">
-                      {report.profiles.map((p, i) => (
-                        <div className="ranking-item" key={p.profileName}>
-                          <span
-                            className={`rank-num ${
-                              i === 0 ? "rank-first" : ""
-                            }`}
-                          >
-                            0{i + 1}
-                          </span>
-                          <div className="rank-profile">
-                            <strong>{p.profileName}</strong>
-                            <div className="mini-bar">
-                              <span style={{ width: `${p.overall * 10}%` }} />
+                  {compare && (
+                    <section className="metric-card ranking-card">
+                      <div className="card-topline">
+                        <span>RANKING</span>
+                        <span className="tiny-code">R / 02</span>
+                      </div>
+                      <div className="ranking-list">
+                        {report.profiles.map((p, i) => (
+                          <div className="ranking-item" key={p.profileName}>
+                            <span
+                              className={`rank-num ${
+                                i === 0 ? "rank-first" : ""
+                              }`}
+                            >
+                              0{i + 1}
+                            </span>
+                            <div className="rank-profile">
+                              <strong>{p.profileName}</strong>
+                              <div className="mini-bar">
+                                <span style={{ width: `${p.overall * 10}%` }} />
+                              </div>
                             </div>
+                            <strong className="rank-score">
+                              {p.overall.toFixed(1)}
+                            </strong>
                           </div>
-                          <strong className="rank-score">
-                            {p.overall.toFixed(1)}
-                          </strong>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="ranking-foot">
-                      <span>VANTAGEM DO LÍDER</span>
-                      <strong>{Math.abs(scoreDiff).toFixed(1)} PONTOS</strong>
-                    </div>
-                  </section>
+                        ))}
+                      </div>
+                      <div className="ranking-foot">
+                        <span>VANTAGEM DO LÍDER</span>
+                        <strong>{Math.abs(scoreDiff).toFixed(1)} PONTOS</strong>
+                      </div>
+                    </section>
+                  )}
 
                   <section className="metric-card category-card">
                     <div className="card-topline">
-                      <span>COMPARATIVO DE PILARES</span>
+                      <span>
+                        {single ? "PILARES DO PERFIL" : "COMPARATIVO DE PILARES"}
+                      </span>
                       <BarChart3 size={17} />
                     </div>
                     <div className="pillar-head">
                       <span>DIMENSÃO</span>
-                      <span>{report.profiles[0]?.profileName}</span>
-                      <span>{report.profiles[1]?.profileName}</span>
+                      {single ? (
+                        <span>{report.profiles[0]?.profileName}</span>
+                      ) : (
+                        <>
+                          <span>{report.profiles[0]?.profileName}</span>
+                          <span>{report.profiles[1]?.profileName}</span>
+                        </>
+                      )}
                     </div>
                     {(
                       [
@@ -1061,14 +1244,21 @@ export default function App() {
                         ["Engajamento", "engagement"],
                       ] as const
                     ).map(([label, key]) => (
-                      <div className="pillar-row" key={key}>
+                      <div
+                        className={`pillar-row ${
+                          single ? "pillar-row-single" : ""
+                        }`}
+                        key={key}
+                      >
                         <span>{label}</span>
                         <strong>
                           {report.profiles[0]?.[key].toFixed(1) ?? "—"}
                         </strong>
-                        <strong className="muted-score">
-                          {report.profiles[1]?.[key].toFixed(1) ?? "—"}
-                        </strong>
+                        {!single && (
+                          <strong className="muted-score">
+                            {report.profiles[1]?.[key].toFixed(1) ?? "—"}
+                          </strong>
+                        )}
                       </div>
                     ))}
                   </section>
@@ -1098,11 +1288,17 @@ export default function App() {
 
               {activeTab === "compare" && (
                 <section className="comparison-detail">
-                  <div className="comparison-profiles">
+                  <div
+                    className={`comparison-profiles ${
+                      single ? "comparison-profiles-single" : ""
+                    }`}
+                  >
                     {report.profiles.map((p, i) => (
                       <article className="detail-profile" key={p.profileName}>
                         <div className="detail-profile-top">
-                          <span className="eyebrow">PERFIL 0{i + 1}</span>
+                          <span className="eyebrow">
+                            {single ? "PERFIL" : `PERFIL 0${i + 1}`}
+                          </span>
                           <strong className="detail-score">
                             {p.overall.toFixed(1)}
                             <small>/10</small>
@@ -1117,11 +1313,7 @@ export default function App() {
                             ["Engajamento", p.engagement],
                           ] as const
                         ).map(([label, value]) => (
-                          <ScoreBar
-                            key={label}
-                            label={label}
-                            value={value}
-                          />
+                          <ScoreBar key={label} label={label} value={value} />
                         ))}
                         <div className="strength-weak">
                           <div>
@@ -1134,9 +1326,7 @@ export default function App() {
                             ))}
                           </div>
                           <div>
-                            <span className="eyebrow">
-                              PONTOS DE ATENÇÃO
-                            </span>
+                            <span className="eyebrow">PONTOS DE ATENÇÃO</span>
                             {p.weaknesses.map((s) => (
                               <p key={s}>
                                 <ArrowDownRight size={14} />
@@ -1146,9 +1336,7 @@ export default function App() {
                           </div>
                         </div>
                         <div className="evidence-list">
-                          <span className="eyebrow">
-                            EVIDÊNCIAS / OBSERVAÇÕES
-                          </span>
+                          <span className="eyebrow">EVIDÊNCIAS / OBSERVAÇÕES</span>
                           {p.evidence.map((e) => (
                             <p key={e}>{e}</p>
                           ))}
@@ -1166,12 +1354,22 @@ export default function App() {
                       <span className="section-index">03 / EXECUÇÃO</span>
                       <h3>Do diagnóstico à ação.</h3>
                       <p>
-                        Planos separados para cada perfil, com etapas, prazos
-                        e KPIs.
+                        {single
+                          ? "Plano de ação específico para o perfil, com etapas, prazos e KPIs."
+                          : "Planos separados para cada perfil, com etapas, prazos e KPIs."}
                       </p>
                     </div>
                   </div>
-                  <ActionPlanTabs report={report} />
+
+                  {single ? (
+                    <div className="action-list">
+                      {(report.actionPlan ?? []).map((item, i) => (
+                        <ActionCard item={item} index={i} key={`single-${i}-${item.title}`} />
+                      ))}
+                    </div>
+                  ) : (
+                    <ActionPlanTabs report={report} />
+                  )}
                 </section>
               )}
 
@@ -1231,10 +1429,7 @@ export default function App() {
                 <X size={18} />
               </button>
             </div>
-            <p>
-              Define o modelo, idioma e tom usados no prompt enviado ao
-              agente.
-            </p>
+            <p>Define o modelo, idioma e tom usados no prompt enviado ao agente.</p>
 
             <label>
               Modelo
@@ -1248,9 +1443,7 @@ export default function App() {
                   <option value="openai/gpt-oss-120b">
                     openai/gpt-oss-120b (melhor)
                   </option>
-                  <option value="openai/gpt-oss-20b">
-                    openai/gpt-oss-20b
-                  </option>
+                  <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
                   <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b</option>
                 </optgroup>
                 <optgroup label="DeepSeek">

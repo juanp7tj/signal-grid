@@ -2681,3 +2681,147 @@ textarea::placeholder {
     transition-duration: 0.01ms !important;
   }
 }
+/* =========================================================
+   MODE TOGGLE — single / compare
+   ========================================================= */
+.mode-toggle-wrap {
+  margin-bottom: 28px;
+}
+
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 8px;
+  background: rgba(20, 22, 15, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  position: relative;
+}
+
+.mode-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-option::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.mode-option:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--line);
+}
+
+.mode-option.active {
+  background: var(--panel-2);
+  border-color: var(--line-strong);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mode-option.active::before {
+  opacity: 0.05;
+}
+
+.mode-option-label {
+  font: 10px var(--mono);
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.mode-option.active .mode-option-label {
+  color: var(--lime);
+}
+
+.mode-option-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.mode-option.active .mode-option-desc {
+  color: var(--text);
+}
+
+/* Ícone indicador de "selecionado" com círculo */
+.mode-option.active::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 12px rgba(200, 255, 61, 0.6);
+}
+
+/* =========================================================
+   AJUSTES — layouts single vs compare
+   ========================================================= */
+.profile-grid-single {
+  grid-template-columns: 1fr;
+}
+
+.pillar-row-single {
+  grid-template-columns: 1.4fr 1fr;
+}
+
+.comparison-profiles-single {
+  grid-template-columns: 1fr;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* =========================================================
+   MOBILE — toggle
+   ========================================================= */
+@media (max-width: 900px) {
+  .mode-toggle-wrap {
+    margin-bottom: 20px;
+  }
+
+  .mode-toggle {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .mode-option {
+    padding: 14px 16px;
+  }
+
+  .mode-option.active::after {
+    right: 16px;
+  }
+
+  .mode-option-desc {
+    font-size: 11px;
+  }
+}
