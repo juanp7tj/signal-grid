@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <rect width="180" height="180" fill="#0a0b08"/>
+  <rect x="12" y="12" width="156" height="156" rx="28" fill="none" stroke="#c8ff3d" stroke-width="4"/>
+  <text
+    x="90"
+    y="115"
+    text-anchor="middle"
+    font-family="ui-monospace, 'IBM Plex Mono', monospace"
+    font-size="68"
+    font-weight="700"
+    fill="#c8ff3d"
+    letter-spacing="-5"
+  >//SG</text>
+</svg>
