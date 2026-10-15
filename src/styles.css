@@ -3010,3 +3010,64 @@ textarea::placeholder {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* CORREÇÃO DE SCROLL MOBILE */
+html {
+  min-height: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  height: auto;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  touch-action: pan-y;
+}
+
+#root,
+.app-shell,
+.main-canvas,
+.page-content {
+  height: auto;
+  min-height: 0;
+  overflow-y: visible;
+}
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main-canvas {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+@media (max-width: 900px) {
+  html,
+  body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-shell,
+  .main-canvas,
+  .page-content {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .page-content {
+    padding-bottom: 40px;
+  }
+
+  .sidebar {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
