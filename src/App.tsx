@@ -56,7 +56,7 @@ const initialB: ProfileInput = {
 };
 
 /* =========================================================
-   Demo report â€” modo comparação
+   Demo report — modo comparação
    ========================================================= */
 const demoCompare: AnalysisReport = {
   title: "Diagnóstico competitivo: Perfil A vs Perfil B",
@@ -67,7 +67,11 @@ const demoCompare: AnalysisReport = {
   profiles: [
     {
       profileName: "Perfil A",
-      overall: 7.8, content: 8.4, consistency: 7.1, positioning: 8.2, engagement: 6.8,
+      overall: 7.8,
+      content: 8.4,
+      consistency: 7.1,
+      positioning: 8.2,
+      engagement: 6.8,
       strengths: [
         "Linha editorial reconhecível",
         "Conteúdo educativo com potencial de salvamento",
@@ -80,7 +84,11 @@ const demoCompare: AnalysisReport = {
     },
     {
       profileName: "Perfil B",
-      overall: 6.9, content: 7.1, consistency: 6.5, positioning: 7.4, engagement: 6.7,
+      overall: 6.9,
+      content: 7.1,
+      consistency: 6.5,
+      positioning: 7.4,
+      engagement: 6.7,
       strengths: ["Tema central compreensível"],
       weaknesses: ["Pilares dispersos", "Diferencial pouco explícito"],
       evidence: ["Exemplo ilustrativo: conferir frequência"],
@@ -119,12 +127,12 @@ const demoCompare: AnalysisReport = {
     {
       priority: "Alta",
       title: "Executar testes de CTA",
-      reason: "Descobrir quais chamadas levam Ã  ação desejada.",
+      reason: "Descobrir quais chamadas levam à ação desejada.",
       steps: ["Criar duas variações de CTA", "Medir resultados"],
       metric: "Resultados documentados",
       deadline: "30 dias",
       owner: "Social Media",
-      kpi: "CTA vencedor com margem â‰¥ 20%",
+      kpi: "CTA vencedor com margem ≥ 20%",
     },
   ],
   caveats: [
@@ -136,7 +144,7 @@ const demoCompare: AnalysisReport = {
 };
 
 /* =========================================================
-   Demo report â€” modo único
+   Demo report — modo único
    ========================================================= */
 const demoSingle: AnalysisReport = {
   title: "Diagnóstico estratégico: Perfil",
@@ -146,7 +154,11 @@ const demoSingle: AnalysisReport = {
   profiles: [
     {
       profileName: "Perfil",
-      overall: 7.4, content: 8.0, consistency: 6.8, positioning: 7.6, engagement: 7.1,
+      overall: 7.4,
+      content: 8.0,
+      consistency: 6.8,
+      positioning: 7.6,
+      engagement: 7.1,
       strengths: [
         "Linha editorial reconhecível com foco em conteúdo educativo",
         "Frequência estável de publicações",
@@ -203,12 +215,12 @@ const demoSingle: AnalysisReport = {
     {
       priority: "Média",
       title: "Executar testes de CTA",
-      reason: "Descobrir quais chamadas levam Ã  ação.",
+      reason: "Descobrir quais chamadas levam à ação.",
       steps: ["Criar duas variações", "Medir resultados"],
       metric: "Resultados documentados",
       deadline: "30 dias",
       owner: "Social Media",
-      kpi: "CTA vencedor com margem â‰¥ 20%",
+      kpi: "CTA vencedor com margem ≥ 20%",
     },
   ],
   caveats: [
@@ -383,7 +395,7 @@ function ActionCard({ item, index }: { item: ActionItem; index: number }) {
                 <strong>{item.deadline}</strong>
               </div>
               <div>
-                <small>RESPONSÃVEL</small>
+                <small>RESPONSÁVEL</small>
                 <strong>{item.owner}</strong>
               </div>
               <div className="meta-wide">
@@ -417,8 +429,10 @@ function ModeToggle({
           onClick={() => onChange("single")}
           aria-pressed={mode === "single"}
         >
-          <span className="mode-option-label">ANÃLISE ÃšNICA</span>
-          <span className="mode-option-desc">1 perfil Â· diagnóstico individual</span>
+          <span className="mode-option-label">ANÁLISE ÚNICA</span>
+          <span className="mode-option-desc">
+            1 perfil · diagnóstico individual
+          </span>
         </button>
         <button
           type="button"
@@ -426,8 +440,10 @@ function ModeToggle({
           onClick={() => onChange("compare")}
           aria-pressed={mode === "compare"}
         >
-          <span className="mode-option-label">COMPARAÃ‡ÃƒO</span>
-          <span className="mode-option-desc">2 perfis Â· diagnóstico competitivo</span>
+          <span className="mode-option-label">COMPARAÇÃO</span>
+          <span className="mode-option-desc">
+            2 perfis · diagnóstico competitivo
+          </span>
         </button>
       </div>
     </section>
@@ -447,7 +463,8 @@ function ActionPlanTabs({ report }: { report: AnalysisReport }) {
   const planB = report.actionPlanB ?? [];
 
   const items = tab === "A" ? planA : planB;
-  const profileName = tab === "A" ? profileA?.profileName : profileB?.profileName;
+  const profileName =
+    tab === "A" ? profileA?.profileName : profileB?.profileName;
 
   return (
     <div className="action-tabs">
@@ -480,7 +497,11 @@ function ActionPlanTabs({ report }: { report: AnalysisReport }) {
         ) : (
           <div className="action-list">
             {items.map((item, i) => (
-              <ActionCard item={item} index={i} key={`${tab}-${i}-${item.title}`} />
+              <ActionCard
+                item={item}
+                index={i}
+                key={`${tab}-${i}-${item.title}`}
+              />
             ))}
           </div>
         )}
@@ -509,7 +530,9 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <div className="print-meta">
           <span>{formatDate(report.generatedAt)}</span>
           <span className={`mode-tag ${report.mode}`}>
-            {report.mode === "demo" ? "DEMONSTRAÃ‡ÃƒO" : report.mode.toUpperCase()}
+            {report.mode === "demo"
+              ? "DEMONSTRAÇÃO"
+              : report.mode.toUpperCase()}
           </span>
         </div>
       </header>
@@ -519,15 +542,15 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <p className="print-summary">{report.summary}</p>
       </section>
 
-      {/* Modo COMPARE â€” visão geral + pilares */}
+      {/* Modo COMPARE — visão geral + pilares */}
       {!single && (
         <>
           <section className="print-section">
-            <h2>01 Â· Visão geral</h2>
+            <h2>01 · Visão geral</h2>
             <div className="print-overview">
               <div className="print-leader">
-                <small>PERFIL LÃDER</small>
-                <strong>{leader?.profileName ?? "â€”"}</strong>
+                <small>PERFIL LÍDER</small>
+                <strong>{leader?.profileName ?? "—"}</strong>
                 <div className="print-score">
                   {leader?.overall.toFixed(1)}
                   <small>/10</small>
@@ -548,7 +571,9 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
                 <small>RANKING</small>
                 <ol>
                   {(report.ranking ?? []).map((name, i) => {
-                    const p = report.profiles.find((x) => x.profileName === name);
+                    const p = report.profiles.find(
+                      (x) => x.profileName === name
+                    );
                     return (
                       <li key={name}>
                         <span className="print-rank-num">
@@ -565,7 +590,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
           </section>
 
           <section className="print-section">
-            <h2>02 Â· Comparação por pilares</h2>
+            <h2>02 · Comparação por pilares</h2>
             <table className="print-table">
               <thead>
                 <tr>
@@ -586,8 +611,8 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
                 ).map(([label, key]) => (
                   <tr key={key}>
                     <td>{label}</td>
-                    <td>{report.profiles[0]?.[key]?.toFixed(1) ?? "â€”"}</td>
-                    <td>{report.profiles[1]?.[key]?.toFixed(1) ?? "â€”"}</td>
+                    <td>{report.profiles[0]?.[key]?.toFixed(1) ?? "—"}</td>
+                    <td>{report.profiles[1]?.[key]?.toFixed(1) ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -596,14 +621,14 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         </>
       )}
 
-      {/* Modo SINGLE â€” diagnóstico do perfil */}
+      {/* Modo SINGLE — diagnóstico do perfil */}
       {single && (
         <section className="print-section">
-          <h2>01 Â· Diagnóstico do perfil</h2>
+          <h2>01 · Diagnóstico do perfil</h2>
           <div className="print-overview">
             <div className="print-leader">
               <small>PERFIL</small>
-              <strong>{leader?.profileName ?? "â€”"}</strong>
+              <strong>{leader?.profileName ?? "—"}</strong>
               <div className="print-score">
                 {leader?.overall.toFixed(1)}
                 <small>/10</small>
@@ -621,9 +646,9 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
                   ] as const
                 ).map(([label, key]) => (
                   <li key={key}>
-                    <span className="print-rank-num">â€”</span>
+                    <span className="print-rank-num">—</span>
                     <span>{label}</span>
-                    <strong>{leader?.[key]?.toFixed(1) ?? "â€”"}</strong>
+                    <strong>{leader?.[key]?.toFixed(1) ?? "—"}</strong>
                   </li>
                 ))}
               </ol>
@@ -635,12 +660,12 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
       {/* Oportunidades */}
       {report.opportunities.length > 0 && (
         <section className="print-section">
-          <h2>{single ? "02" : "03"} Â· Oportunidades prioritárias</h2>
+          <h2>{single ? "02" : "03"} · Oportunidades prioritárias</h2>
           <ol className="print-list">
             {report.opportunities.map((o, i) => (
               <li key={o.title}>
                 <strong>
-                  {String(i + 1).padStart(2, "0")} Â· {o.title}
+                  {String(i + 1).padStart(2, "0")} · {o.title}
                 </strong>
                 <span className="print-impact">[{o.impact}]</span>
                 <p>{o.description}</p>
@@ -652,7 +677,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
 
       {/* Plano de ação */}
       <section className="print-section">
-        <h2>{single ? "03" : "04"} Â· Plano de ação</h2>
+        <h2>{single ? "03" : "04"} · Plano de ação</h2>
         <ol className="print-actions">
           {(single
             ? report.actionPlan ?? []
@@ -661,7 +686,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
             <li key={`${a.title}-${i}`}>
               <div className="print-action-head">
                 <strong>
-                  {String(i + 1).padStart(2, "0")} Â· {a.title}
+                  {String(i + 1).padStart(2, "0")} · {a.title}
                 </strong>
                 <span className={`print-priority p-${a.priority.toLowerCase()}`}>
                   {a.priority}
@@ -696,13 +721,13 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <section className="print-section print-caveats">
           <h2>Limitações e premissas</h2>
           {report.caveats.map((c, i) => (
-            <p key={i}>â€” {c}</p>
+            <p key={i}>— {c}</p>
           ))}
         </section>
       )}
 
       <footer className="print-footer">
-        <span>SIGNAL GRID Â· COMPETITIVE INTELLIGENCE</span>
+        <span>SIGNAL GRID · COMPETITIVE INTELLIGENCE</span>
         <span>Gerado em {formatDate(report.generatedAt)}</span>
       </footer>
     </div>
@@ -731,18 +756,13 @@ export default function App() {
   const [evidence, setEvidence] = useState("");
   const [demoMode, setDemoMode] = useState(false);
 
-  // â¬‡ï¸ AQUI os três novos
+  // Histórico
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<HistorySummary[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  
-    const scoreDiff = useMemo(() => {
-    if (
-      mode !== "compare" ||
-      !report ||
-      report.profiles.length < 2
-    ) {
+  const scoreDiff = useMemo(() => {
+    if (mode !== "compare" || !report || report.profiles.length < 2) {
       return 0;
     }
     return report.profiles[0].overall - report.profiles[1].overall;
@@ -761,7 +781,10 @@ export default function App() {
     setError("");
     setReport(null);
     setLoading(true);
-    setProgress(["Validando briefing e URLs", "Preparando contexto estratégico"]);
+    setProgress([
+      "Validando briefing e URLs",
+      "Preparando contexto estratégico",
+    ]);
 
     if (!validInstagramUrl(profileA.url)) {
       setError("Informe uma URL válida do Instagram.");
@@ -798,9 +821,21 @@ export default function App() {
         }),
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      let data: any;
+      try {
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        throw new Error(
+          `Resposta inválida do servidor (HTTP ${response.status}).`
+        );
+      }
       if (!response.ok) {
-        throw new Error(data.error || "não foi possível concluir a análise.");
+        throw new Error(
+          data?.error ||
+            data?.details ||
+            "Não foi possível concluir a análise."
+        );
       }
       setReport(data as AnalysisReport);
       setActiveTab("overview");
@@ -810,6 +845,7 @@ export default function App() {
           ? "Modo demonstrativo ativado"
           : "Análise concluída",
       ]);
+      setTimeout(loadHistory, 200);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha inesperada.");
     } finally {
@@ -830,6 +866,7 @@ export default function App() {
   const topScore = report?.profiles[0];
   const single = report?.analysisMode === "single";
   const compare = report?.analysisMode === "compare";
+
   /* =========================================================
      Histórico
      ========================================================= */
@@ -851,33 +888,32 @@ export default function App() {
   }
 
   async function openHistoryEntry(id: string, print = false) {
-  try {
-    const res = await fetch(`/api/history/${id}`);
-    const text = await res.text();
-    if (!text) return;
-    const data = JSON.parse(text);
-    if (data?.ok && data.entry?.report) {
-      setReport(data.entry.report as AnalysisReport);
-      setActiveTab("overview");
-      setHistoryOpen(false);
+    try {
+      const res = await fetch(`/api/history/${id}`);
+      const text = await res.text();
+      if (!text) return;
+      const data = JSON.parse(text);
+      if (data?.ok && data.entry?.report) {
+        setReport(data.entry.report as AnalysisReport);
+        setActiveTab("overview");
+        setHistoryOpen(false);
 
-      if (print) {
-        // Aguarda o React renderizar o ReportPrintView antes de imprimir
-        window.setTimeout(() => {
-          document.body.classList.add("printing-report");
-          window.print();
+        if (print) {
           window.setTimeout(() => {
-            document.body.classList.remove("printing-report");
-          }, 500);
-        }, 300);
-      } else {
-        window.scrollTo({ top: 0, behavior: "smooth" });
+            document.body.classList.add("printing-report");
+            window.print();
+            window.setTimeout(() => {
+              document.body.classList.remove("printing-report");
+            }, 500);
+          }, 300);
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
       }
+    } catch (e) {
+      console.warn("[history] falha ao abrir:", e);
     }
-  } catch (e) {
-    console.warn("[history] falha ao abrir:", e);
   }
-}
 
   async function deleteHistoryEntry(id: string) {
     try {
@@ -889,7 +925,9 @@ export default function App() {
   }
 
   async function clearHistory() {
-    if (!confirm("Apagar todo o histórico? Esta ação não pode ser desfeita.")) {
+    if (
+      !confirm("Apagar todo o histórico? Esta ação não pode ser desfeita.")
+    ) {
       return;
     }
     try {
@@ -909,7 +947,7 @@ export default function App() {
     <div className="app-shell">
       {report && <ReportPrintView report={report} />}
 
-            <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
           <div className="brand-mark">
             <span>//</span>SG
@@ -929,7 +967,7 @@ export default function App() {
 
         <div className="workspace">
           <span className="workspace-dot" />
-          <span>AGÃŠNCIA / WORKSPACE 01</span>
+          <span>AGÊNCIA / WORKSPACE 01</span>
           <ChevronRight size={13} />
         </div>
 
@@ -942,7 +980,8 @@ export default function App() {
               setSidebarOpen(false);
             }}
           >
-            <BarChart3 size={17} /> Visão geral <span className="nav-key">01</span>
+            <BarChart3 size={17} /> Visão geral{" "}
+            <span className="nav-key">01</span>
           </button>
           <button
             className={activeTab === "compare" ? "active" : ""}
@@ -961,7 +1000,8 @@ export default function App() {
               setSidebarOpen(false);
             }}
           >
-            <Target size={17} /> Plano de ação <span className="nav-key">03</span>
+            <Target size={17} /> Plano de ação{" "}
+            <span className="nav-key">03</span>
           </button>
 
           <span className="nav-caption nav-caption-spaced">SISTEMA</span>
@@ -975,7 +1015,7 @@ export default function App() {
             <span className="pulse-dot" />
             <div>
               <strong>AGENT</strong>
-              <small>Groq Â· GPT-OSS 120B</small>
+              <small>Groq · GPT-OSS 120B</small>
             </div>
           </div>
           <div className="sidebar-foot">
@@ -1017,7 +1057,7 @@ export default function App() {
             </span>
           </div>
           <div className="topbar-right">
-                        <button
+            <button
               className="icon-button"
               title="Histórico de análises"
               onClick={() => {
@@ -1042,7 +1082,6 @@ export default function App() {
         </header>
 
         <div className="page-content">
-          {/* ðŸ”¥ TOGGLE DE MODO â€” primeira coisa visível */}
           <ModeToggle mode={mode} onChange={handleModeChange} />
 
           <section className="hero-row">
@@ -1050,8 +1089,8 @@ export default function App() {
               <div className="eyebrow">
                 <span className="eyebrow-line" />{" "}
                 {mode === "single"
-                  ? "SOCIAL INTELLIGENCE / DIAGNÃ“STICO ÃšNICO"
-                  : "SOCIAL INTELLIGENCE / COMPARAÃ‡ÃƒO"}
+                  ? "SOCIAL INTELLIGENCE / DIAGNÓSTICO ÚNICO"
+                  : "SOCIAL INTELLIGENCE / COMPARAÇÃO"}
               </div>
               <h1>
                 {mode === "single" ? (
@@ -1091,7 +1130,7 @@ export default function App() {
                   </>
                 )}
               </span>
-              <strong>SGâ€”01</strong>
+              <strong>SG—01</strong>
             </div>
           </section>
 
@@ -1110,7 +1149,7 @@ export default function App() {
                     : "Informe os dois perfis e o contexto da análise."}
                 </p>
               </div>
-              <span className="required-note">* CAMPOS OBRIGATÃ“RIOS</span>
+              <span className="required-note">* CAMPOS OBRIGATÓRIOS</span>
             </div>
 
             <div
@@ -1119,7 +1158,11 @@ export default function App() {
               }`}
             >
               <ProfileForm
-                label={mode === "single" ? "PERFIL / ALVO" : "PERFIL A / REFERÃŠNCIA"}
+                label={
+                  mode === "single"
+                    ? "PERFIL / ALVO"
+                    : "PERFIL A / REFERÊNCIA"
+                }
                 profile={profileA}
                 onChange={setProfileA}
               />
@@ -1138,7 +1181,7 @@ export default function App() {
             </div>
 
             <label className="evidence-label">
-              CONTEXTO / EVIDÃŠNCIAS OPCIONAIS <span>RECOMENDADO</span>
+              CONTEXTO / EVIDÊNCIAS OPCIONAIS <span>RECOMENDADO</span>
               <textarea
                 value={evidence}
                 onChange={(e) => setEvidence(e.target.value)}
@@ -1154,7 +1197,7 @@ export default function App() {
               <div className="briefing-note">
                 <ShieldCheck size={16} />
                 <span>
-                  Sem login no Instagram. não acessamos dados privados nem
+                  Sem login no Instagram. Não acessamos dados privados nem
                   extraímos métricas automaticamente.
                 </span>
               </div>
@@ -1182,8 +1225,8 @@ export default function App() {
                   {loading
                     ? "ANALISANDO..."
                     : mode === "single"
-                    ? "GERAR DIAGNÃ“STICO"
-                    : "EXECUTAR COMPARAÃ‡ÃƒO"}
+                    ? "GERAR DIAGNÓSTICO"
+                    : "EXECUTAR COMPARAÇÃO"}
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -1196,7 +1239,9 @@ export default function App() {
                 <LoaderCircle className="spin" size={19} />
                 <div>
                   <strong>Agente estratégico em execução</strong>
-                  <small>Montando diagnóstico com base no briefing fornecido.</small>
+                  <small>
+                    Montando diagnóstico com base no briefing fornecido.
+                  </small>
                 </div>
                 <span className="live-label">LIVE</span>
               </div>
@@ -1252,14 +1297,17 @@ export default function App() {
                     02 / RESULTADO{" "}
                     <span className={`mode-tag ${report.mode}`}>
                       {report.mode === "demo"
-                        ? "DEMONSTRAÃ‡ÃƒO"
+                        ? "DEMONSTRAÇÃO"
                         : report.mode.toUpperCase()}
                     </span>
                   </span>
                   <h2>{report.title}</h2>
                   <p>{report.summary}</p>
                 </div>
-                <button className="button-secondary" onClick={exportReport}>
+                <button
+                  className="button-secondary"
+                  onClick={exportReport}
+                >
                   <FileText size={16} /> EXPORTAR PDF
                 </button>
               </section>
@@ -1268,18 +1316,20 @@ export default function App() {
                 <div className="overview-grid">
                   <section className="metric-card lead-metric">
                     <div className="card-topline">
-                      <span>{single ? "PERFIL ANALISADO" : "PERFIL EM DESTAQUE"}</span>
+                      <span>
+                        {single ? "PERFIL ANALISADO" : "PERFIL EM DESTAQUE"}
+                      </span>
                       <TrendingUp size={17} />
                     </div>
                     <div className="lead-name">
-                      {topScore?.profileName || "â€”"}
+                      {topScore?.profileName || "—"}
                     </div>
                     <div className="lead-score">
                       {topScore?.overall.toFixed(1)}
                       <small>/10</small>
                     </div>
                     <div className="lead-bottom">
-                      <span>ÃNDICE ESTRATÃ‰GICO</span>
+                      <span>ÍNDICE ESTRATÉGICO</span>
                       {compare && (
                         <span className="delta">
                           <ArrowUpRight size={14} />{" "}
@@ -1289,7 +1339,9 @@ export default function App() {
                     </div>
                     <div className="bar lead-bar">
                       <span
-                        style={{ width: `${(topScore?.overall || 0) * 10}%` }}
+                        style={{
+                          width: `${(topScore?.overall || 0) * 10}%`,
+                        }}
                       />
                     </div>
                   </section>
@@ -1323,8 +1375,10 @@ export default function App() {
                         ))}
                       </div>
                       <div className="ranking-foot">
-                        <span>VANTAGEM DO LÃDER</span>
-                        <strong>{Math.abs(scoreDiff).toFixed(1)} PONTOS</strong>
+                        <span>VANTAGEM DO LÍDER</span>
+                        <strong>
+                          {Math.abs(scoreDiff).toFixed(1)} PONTOS
+                        </strong>
                       </div>
                     </section>
                   )}
@@ -1332,12 +1386,14 @@ export default function App() {
                   <section className="metric-card category-card">
                     <div className="card-topline">
                       <span>
-                        {single ? "PILARES DO PERFIL" : "COMPARATIVO DE PILARES"}
+                        {single
+                          ? "PILARES DO PERFIL"
+                          : "COMPARATIVO DE PILARES"}
                       </span>
                       <BarChart3 size={17} />
                     </div>
                     <div className="pillar-head">
-                      <span>DIMENSÃƒO</span>
+                      <span>DIMENSÃO</span>
                       {single ? (
                         <span>{report.profiles[0]?.profileName}</span>
                       ) : (
@@ -1363,11 +1419,11 @@ export default function App() {
                       >
                         <span>{label}</span>
                         <strong>
-                          {report.profiles[0]?.[key].toFixed(1) ?? "â€”"}
+                          {report.profiles[0]?.[key].toFixed(1) ?? "—"}
                         </strong>
                         {!single && (
                           <strong className="muted-score">
-                            {report.profiles[1]?.[key].toFixed(1) ?? "â€”"}
+                            {report.profiles[1]?.[key].toFixed(1) ?? "—"}
                           </strong>
                         )}
                       </div>
@@ -1405,7 +1461,10 @@ export default function App() {
                     }`}
                   >
                     {report.profiles.map((p, i) => (
-                      <article className="detail-profile" key={p.profileName}>
+                      <article
+                        className="detail-profile"
+                        key={p.profileName}
+                      >
                         <div className="detail-profile-top">
                           <span className="eyebrow">
                             {single ? "PERFIL" : `PERFIL 0${i + 1}`}
@@ -1424,11 +1483,15 @@ export default function App() {
                             ["Engajamento", p.engagement],
                           ] as const
                         ).map(([label, value]) => (
-                          <ScoreBar key={label} label={label} value={value} />
+                          <ScoreBar
+                            key={label}
+                            label={label}
+                            value={value}
+                          />
                         ))}
                         <div className="strength-weak">
                           <div>
-                            <span className="eyebrow">FORÃ‡AS</span>
+                            <span className="eyebrow">FORÇAS</span>
                             {p.strengths.map((s) => (
                               <p key={s}>
                                 <Check size={14} />
@@ -1437,7 +1500,9 @@ export default function App() {
                             ))}
                           </div>
                           <div>
-                            <span className="eyebrow">PONTOS DE ATENÃ‡ÃƒO</span>
+                            <span className="eyebrow">
+                              PONTOS DE ATENÇÃO
+                            </span>
                             {p.weaknesses.map((s) => (
                               <p key={s}>
                                 <ArrowDownRight size={14} />
@@ -1447,7 +1512,9 @@ export default function App() {
                           </div>
                         </div>
                         <div className="evidence-list">
-                          <span className="eyebrow">EVIDÃŠNCIAS / OBSERVAÃ‡Ã•ES</span>
+                          <span className="eyebrow">
+                            EVIDÊNCIAS / OBSERVAÇÕES
+                          </span>
                           {p.evidence.map((e) => (
                             <p key={e}>{e}</p>
                           ))}
@@ -1462,8 +1529,8 @@ export default function App() {
                 <section className="actions-section">
                   <div className="action-section-intro">
                     <div>
-                      <span className="section-index">03 / EXECUÃ‡ÃƒO</span>
-                      <h3>Do diagnóstico Ã  ação.</h3>
+                      <span className="section-index">03 / EXECUÇÃO</span>
+                      <h3>Do diagnóstico à ação.</h3>
                       <p>
                         {single
                           ? "Plano de ação específico para o perfil, com etapas, prazos e KPIs."
@@ -1475,7 +1542,11 @@ export default function App() {
                   {single ? (
                     <div className="action-list">
                       {(report.actionPlan ?? []).map((item, i) => (
-                        <ActionCard item={item} index={i} key={`single-${i}-${item.title}`} />
+                        <ActionCard
+                          item={item}
+                          index={i}
+                          key={`single-${i}-${item.title}`}
+                        />
                       ))}
                     </div>
                   ) : (
@@ -1488,12 +1559,12 @@ export default function App() {
                 <div>
                   <ShieldCheck size={16} />
                   <span>
-                    Notas são avaliações estratégicas do modelo, não métricas
-                    oficiais do Instagram.
+                    Notas são avaliações estratégicas do modelo, não
+                    métricas oficiais do Instagram.
                   </span>
                 </div>
                 <button className="text-button" onClick={analyze}>
-                  <LoaderCircle size={14} /> REFAZER ANÃLISE
+                  <LoaderCircle size={14} /> REFAZER ANÁLISE
                 </button>
               </section>
 
@@ -1501,7 +1572,7 @@ export default function App() {
                 <section className="caveats">
                   <strong>LIMITES E PREMISSAS</strong>
                   {report.caveats.map((c, i) => (
-                    <p key={i}>â€” {c}</p>
+                    <p key={i}>— {c}</p>
                   ))}
                 </section>
               )}
@@ -1509,10 +1580,10 @@ export default function App() {
           )}
 
           <footer className="page-footer">
-            <span>Â© 2026 SIGNAL GRID / INTERNAL USE</span>
+            <span>© 2026 SIGNAL GRID / INTERNAL USE</span>
             <span>
               BUILT FOR STRATEGIC THINKING{" "}
-              <span className="footer-dot">â—</span>
+              <span className="footer-dot">●</span>
             </span>
           </footer>
         </div>
@@ -1529,7 +1600,7 @@ export default function App() {
           >
             <div className="modal-head">
               <div>
-                <span className="eyebrow">HISTÃ“RICO / ANÃLISES</span>
+                <span className="eyebrow">HISTÓRICO / ANÁLISES</span>
                 <h2>Análises anteriores</h2>
               </div>
               <button
@@ -1556,7 +1627,9 @@ export default function App() {
                     >
                       <div className="history-item-top">
                         <span className={`mode-tag ${h.analysisMode}`}>
-                          {h.analysisMode === "compare" ? "COMPARAÃ‡ÃƒO" : "ÃšNICA"}
+                          {h.analysisMode === "compare"
+                            ? "COMPARAÇÃO"
+                            : "ÚNICA"}
                         </span>
                         <span className="history-date">
                           {formatDate(h.createdAt)}
@@ -1569,7 +1642,7 @@ export default function App() {
                           <span key={name} className="history-score">
                             {name}
                             <strong>
-                              {h.overallScores[i]?.toFixed(1) ?? "â€”"}
+                              {h.overallScores[i]?.toFixed(1) ?? "—"}
                             </strong>
                           </span>
                         ))}
@@ -1579,9 +1652,9 @@ export default function App() {
                       className="icon-button history-pdf"
                       onClick={() => openHistoryEntry(h.id, true)}
                       title="Baixar PDF"
-                        >
-                        <FileText size={14} />
-</button>
+                    >
+                      <FileText size={14} />
+                    </button>
                     <button
                       className="icon-button history-delete"
                       onClick={() => deleteHistoryEntry(h.id)}
@@ -1617,7 +1690,7 @@ export default function App() {
           >
             <div className="modal-head">
               <div>
-                <span className="eyebrow">CONFIGURAÃ‡ÃƒO / AGENTE</span>
+                <span className="eyebrow">CONFIGURAÇÃO / AGENTE</span>
                 <h2>Personalização</h2>
               </div>
               <button
@@ -1628,7 +1701,10 @@ export default function App() {
                 <X size={18} />
               </button>
             </div>
-            <p>Define o modelo, idioma e tom usados no prompt enviado ao agente.</p>
+            <p>
+              Define o modelo, idioma e tom usados no prompt enviado ao
+              agente.
+            </p>
 
             <label>
               Modelo
@@ -1638,15 +1714,21 @@ export default function App() {
                   setSettings({ ...settings, model: e.target.value })
                 }
               >
-                <optgroup label="Groq (recomendado â€” grátis)">
+                <optgroup label="Groq (recomendado — grátis)">
                   <option value="openai/gpt-oss-120b">
                     openai/gpt-oss-120b (melhor)
                   </option>
-                  <option value="openai/gpt-oss-20b">openai/gpt-oss-20b</option>
-                  <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b</option>
+                  <option value="openai/gpt-oss-20b">
+                    openai/gpt-oss-20b
+                  </option>
+                  <option value="qwen/qwen3.8-27b">
+                    qwen/qwen3.8-27b
+                  </option>
                 </optgroup>
                 <optgroup label="DeepSeek">
-                  <option value="deepseek-v4-pro">deepseek-v4-pro</option>
+                  <option value="deepseek-v4-pro">
+                    deepseek-v4-pro
+                  </option>
                   <option value="deepseek-flash">deepseek-flash</option>
                 </optgroup>
                 <optgroup label="Ollama (local)">
@@ -1666,7 +1748,7 @@ export default function App() {
               >
                 <option>Português (Brasil)</option>
                 <option>English</option>
-                <option>EspaÃ±ol</option>
+                <option>Español</option>
               </select>
             </label>
 
@@ -1692,7 +1774,7 @@ export default function App() {
               className="button-primary modal-save"
               onClick={() => setShowSettings(false)}
             >
-              APLICAR CONFIGURAÃ‡Ã•ES <Check size={16} />
+              APLICAR CONFIGURAÇÕES <Check size={16} />
             </button>
           </section>
         </div>
