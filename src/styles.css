@@ -3386,3 +3386,294 @@ body {
   border-color: var(--lime);
   background: rgba(200, 255, 61, 0.08);
 }
+
+/* =========================================================
+   AUTH — tela de login (layout refinado + mobile)
+   ========================================================= */
+.login-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 0%, rgba(200, 255, 61, 0.10), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 100%, rgba(94, 255, 199, 0.08), transparent 60%),
+    var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grade decorativa de fundo */
+.login-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(200, 255, 61, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 255, 61, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 30%, transparent 80%);
+  pointer-events: none;
+}
+
+/* Glow decorativo no topo */
+.login-screen::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(200, 255, 61, 0.08), transparent 60%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 36px 32px;
+  background: rgba(20, 22, 15, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(200, 255, 61, 0.04) inset,
+    0 0 80px rgba(200, 255, 61, 0.05);
+  animation: loginCardIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes loginCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+.login-brand .brand-mark {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  border: 1.5px solid var(--lime);
+  color: var(--lime);
+  padding: 8px 9px;
+  letter-spacing: -1px;
+  border-radius: var(--r-sm);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.login-brand .brand-mark span {
+  font-weight: 400;
+}
+
+.login-brand strong {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.login-brand small {
+  display: block;
+  font: 8px var(--mono);
+  color: var(--muted);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.login-card h2 {
+  font-family: var(--display);
+  font-size: 26px;
+  letter-spacing: -0.8px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.15;
+  margin-top: 4px;
+}
+
+.login-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.login-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font: 10px var(--mono);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.login-card input {
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  color: var(--text);
+  outline: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.login-card input:focus {
+  border-color: var(--lime);
+  background: var(--panel-3);
+  box-shadow:
+    0 0 0 3px rgba(200, 255, 61, 0.08),
+    0 0 20px rgba(200, 255, 61, 0.1);
+}
+
+.login-card input::placeholder {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 20px;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.login-card .error-banner {
+  margin-bottom: 0;
+  font-size: 12px;
+  padding: 12px 14px;
+}
+
+/* Loading state */
+.login-card > .spin {
+  color: var(--lime);
+  align-self: center;
+}
+
+.login-card > p {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* -----------------------------------------------------------
+   Responsivo — mobile
+   ----------------------------------------------------------- */
+@media (max-width: 480px) {
+  .login-screen {
+    padding: 16px;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .login-card {
+    padding: 28px 22px;
+    gap: 16px;
+    border-radius: var(--r-lg);
+  }
+
+  .login-brand {
+    gap: 10px;
+    padding-bottom: 16px;
+  }
+
+  .login-brand .brand-mark {
+    font-size: 13px;
+    padding: 7px 8px;
+  }
+
+  .login-brand strong {
+    font-size: 11px;
+    letter-spacing: 1.2px;
+  }
+
+  .login-brand small {
+    font-size: 7px;
+  }
+
+  .login-card h2 {
+    font-size: 22px;
+    letter-spacing: -0.6px;
+  }
+
+  .login-sub {
+    font-size: 12px;
+  }
+
+  .login-card input {
+    padding: 13px 14px;
+    font-size: 16px; /* evita zoom automático no iOS */
+  }
+
+  .login-submit {
+    padding: 15px 18px;
+  }
+}
+
+/* Telas muito pequenas (iPhone SE, etc.) */
+@media (max-height: 640px) and (orientation: landscape) {
+  .login-screen {
+    padding: 12px;
+  }
+  .login-card {
+    padding: 20px 24px;
+    gap: 12px;
+  }
+  .login-brand {
+    padding-bottom: 12px;
+  }
+  .login-card h2 {
+    font-size: 20px;
+  }
+  .login-sub {
+    display: none;
+  }
+}
+
+/* Ajuste para telas grandes (mantém elegante) */
+@media (min-width: 1200px) {
+  .login-card {
+    width: min(440px, 100%);
+    padding: 40px 36px;
+  }
+  .login-card h2 {
+    font-size: 28px;
+  }
+}
+
+/* Motion reduzido */
+@media (prefers-reduced-motion: reduce) {
+  .login-card {
+    animation: none;
+  }
+}

@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import path from "node:path";
 import fs from "node:fs/promises";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 /* =========================================================
@@ -10,14 +11,20 @@ import { fileURLToPath } from "node:url";
    ========================================================= */
 const app = express();
 
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || 3001);
 const AI_PROVIDER = (process.env.AI_PROVIDER || "openai-compatible") as
   | "ollama"
   | "openai-compatible";
 
 const HISTORY_DIR = path.resolve(process.cwd(), "data");
 const HISTORY_FILE = path.join(HISTORY_DIR, "history.json");
+const USERS_FILE = path.join(HISTORY_DIR, "users.json");
 const HISTORY_MAX = 50;
+
+// Auth
+const AUTH_SECRET =
+  process.env.AUTH_SECRET || "signal-grid-secret-troque-em-producao";
+const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 dias
 
 // Ollama
 const OLLAMA_BASE_URL = (
@@ -26,7 +33,7 @@ const OLLAMA_BASE_URL = (
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5:3b";
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || "";
 
-// OpenAI-compatible (Groq, DeepSeek, OpenAI, etc.)
+// OpenAI-compatible
 const OPENAI_BASE_URL = (
   process.env.OPENAI_BASE_URL || "https://api.groq.com/openai"
 ).replace(/\/+$/, "");
@@ -79,6 +86,14 @@ type HistoryEntry = {
   report: unknown;
 };
 
+type User = {
+  id: string;
+  username: string;
+  passwordHash: string;
+  role: "admin" | "user";
+  createdAt: string;
+};
+
 /* =========================================================
    Validação / sanitização
    ========================================================= */
@@ -105,7 +120,7 @@ function isInstagramUrl(value: string): boolean {
 }
 
 /* =========================================================
-   HISTÓRICO — persistência em arquivo JSON
+   Persistência — histórico
    ========================================================= */
 async function readHistory(): Promise<HistoryEntry[]> {
   try {
@@ -128,7 +143,102 @@ function makeId(): string {
 }
 
 /* =========================================================
-   Relatório demonstrativo (single + compare)
+   AUTH — helpers
+   ========================================================= */
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(":");
+  if (!salt || !hash) return false;
+  const test = crypto.scryptSync(password, salt, 64).toString("hex");
+  const a = Buffer.from(hash, "hex");
+  const b = Buffer.from(test, "hex");
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function makeToken(payload: { uid: string; role: string }): string {
+  const body = Buffer.from(
+    JSON.stringify({ ...payload, exp: Date.now() + TOKEN_TTL_MS })
+  ).toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", AUTH_SECRET)
+    .update(body)
+    .digest("base64url");
+  return `${body}.${sig}`;
+}
+
+function verifyToken(token: string): { uid: string; role: string } | null {
+  try {
+    const [body, sig] = token.split(".");
+    if (!body || !sig) return null;
+    const expected = crypto
+      .createHmac("sha256", AUTH_SECRET)
+      .update(body)
+      .digest("base64url");
+    if (sig !== expected) return null;
+    const parsed = JSON.parse(Buffer.from(body, "base64url").toString());
+    if (typeof parsed.exp !== "number" || parsed.exp < Date.now()) return null;
+    return { uid: parsed.uid, role: parsed.role };
+  } catch {
+    return null;
+  }
+}
+
+async function readUsers(): Promise<User[]> {
+  try {
+    await fs.mkdir(HISTORY_DIR, { recursive: true });
+    const raw = await fs.readFile(USERS_FILE, "utf-8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeUsers(users: User[]): Promise<void> {
+  await fs.mkdir(HISTORY_DIR, { recursive: true });
+  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+}
+
+async function ensureAdminSeed(): Promise<void> {
+  const users = await readUsers();
+  if (users.some((u) => u.role === "admin")) return;
+  const admin: User = {
+    id: makeId(),
+    username: "admin",
+    passwordHash: hashPassword("admin123"),
+    role: "admin",
+    createdAt: new Date().toISOString(),
+  };
+  users.push(admin);
+  await writeUsers(users);
+  console.log("[auth] Admin padrão criado → usuário: admin | senha: admin123");
+}
+
+function requireAuth(req: any, res: any, next: any) {
+  const header = req.headers["authorization"] || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const payload = verifyToken(token);
+  if (!payload) {
+    return res.status(401).json({ error: "Não autenticado." });
+  }
+  req.auth = payload;
+  next();
+}
+
+function requireAdmin(req: any, res: any, next: any) {
+  if (req.auth?.role !== "admin") {
+    return res.status(403).json({ error: "Acesso restrito a administradores." });
+  }
+  next();
+}
+
+/* =========================================================
+   Relatório demonstrativo
    ========================================================= */
 function demoReport(a: ProfileInput, b: ProfileInput | null) {
   const single = !b;
@@ -442,9 +552,101 @@ app.get("/api/health", (_req, res) => {
 });
 
 /* =========================================================
+   AUTH — rotas
+   ========================================================= */
+app.post("/api/auth/login", async (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "");
+  if (!username || !password) {
+    return res.status(400).json({ error: "Informe usuário e senha." });
+  }
+  const users = await readUsers();
+  const user = users.find((u) => u.username === username);
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    return res.status(401).json({ error: "Usuário ou senha inválidos." });
+  }
+  const token = makeToken({ uid: user.id, role: user.role });
+  res.json({
+    ok: true,
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    },
+  });
+});
+
+app.get("/api/auth/me", requireAuth, async (req, res) => {
+  const users = await readUsers();
+  const user = users.find((u) => u.id === (req as any).auth.uid);
+  if (!user) return res.status(401).json({ error: "Sessão inválida." });
+  res.json({
+    ok: true,
+    user: { id: user.id, username: user.username, role: user.role },
+  });
+});
+
+app.get("/api/auth/users", requireAuth, requireAdmin, async (_req, res) => {
+  const users = await readUsers();
+  res.json({
+    ok: true,
+    users: users.map((u) => ({
+      id: u.id,
+      username: u.username,
+      role: u.role,
+      createdAt: u.createdAt,
+    })),
+  });
+});
+
+app.post("/api/auth/users", requireAuth, requireAdmin, async (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "");
+  const role = req.body?.role === "admin" ? "admin" : "user";
+
+  if (username.length < 3) {
+    return res.status(400).json({ error: "Usuário precisa ter 3+ caracteres." });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Senha precisa ter 6+ caracteres." });
+  }
+
+  const users = await readUsers();
+  if (users.some((u) => u.username === username)) {
+    return res.status(409).json({ error: "Usuário já existe." });
+  }
+  const user: User = {
+    id: makeId(),
+    username,
+    passwordHash: hashPassword(password),
+    role,
+    createdAt: new Date().toISOString(),
+  };
+  users.push(user);
+  await writeUsers(users);
+  res.json({
+    ok: true,
+    user: { id: user.id, username: user.username, role: user.role },
+  });
+});
+
+app.delete("/api/auth/users/:id", requireAuth, requireAdmin, async (req, res) => {
+  const users = await readUsers();
+  const target = users.find((u) => u.id === req.params.id);
+  if (!target) return res.status(404).json({ error: "Usuário não encontrado." });
+  if (target.role === "admin") {
+    return res.status(403).json({ error: "Não é possível remover um admin." });
+  }
+  const filtered = users.filter((u) => u.id !== req.params.id);
+  await writeUsers(filtered);
+  res.json({ ok: true });
+});
+
+/* =========================================================
    /api/history
    ========================================================= */
-app.get("/api/history", async (_req, res) => {
+app.get("/api/history", requireAuth, async (_req, res) => {
   try {
     const entries = await readHistory();
     const summaries = entries.map((e) => ({
@@ -465,7 +667,7 @@ app.get("/api/history", async (_req, res) => {
   }
 });
 
-app.get("/api/history/:id", async (req, res) => {
+app.get("/api/history/:id", requireAuth, async (req, res) => {
   try {
     const entries = await readHistory();
     const entry = entries.find((e) => e.id === req.params.id);
@@ -481,7 +683,7 @@ app.get("/api/history/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/history/:id", async (req, res) => {
+app.delete("/api/history/:id", requireAuth, async (req, res) => {
   try {
     const entries = await readHistory();
     const filtered = entries.filter((e) => e.id !== req.params.id);
@@ -495,7 +697,7 @@ app.delete("/api/history/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/history", async (_req, res) => {
+app.delete("/api/history", requireAuth, async (_req, res) => {
   try {
     await writeHistory([]);
     res.json({ ok: true });
@@ -508,7 +710,7 @@ app.delete("/api/history", async (_req, res) => {
 });
 
 /* =========================================================
-   Debug interno — só em desenvolvimento
+   Debug interno
    ========================================================= */
 if (process.env.NODE_ENV !== "production") {
   app.get("/api/_debug/health", async (_req, res) => {
@@ -566,7 +768,7 @@ if (process.env.NODE_ENV !== "production") {
 /* =========================================================
    Análise principal
    ========================================================= */
-app.post("/api/analyze", async (req, res) => {
+app.post("/api/analyze", requireAuth, async (req, res) => {
   try {
     const analysisMode: AnalysisMode =
       req.body?.analysisMode === "single" ? "single" : "compare";
@@ -600,7 +802,9 @@ app.post("/api/analyze", async (req, res) => {
         ? String(OLLAMA_MODEL).slice(0, 100)
         : String(OPENAI_MODEL).slice(0, 100);
 
-    console.log(`[analyze] mode=${analysisMode} provider=${AI_PROVIDER} model=${model}`);
+    console.log(
+      `[analyze] mode=${analysisMode} provider=${AI_PROVIDER} model=${model}`
+    );
 
     const schema = analysisMode === "single" ? schemaSingle : schemaCompare;
 
@@ -655,7 +859,9 @@ REGRAS DE QUALIDADE (resposta genérica é considerada falha):
 13. Cada oportunidade deve descrever uma JOGADA CONCRETA (o que fazer, quando, com qual formato e qual métrica), nunca um tema abstrato.
 14. Se duas recomendações puderem ser aplicadas a qualquer perfil, reescreva-as até serem específicas deste briefing.
 
-REGRAS ESPECÍFICAS DO MODO (${analysisMode === "single" ? "ANÁLISE ÚNICA" : "COMPARAÇÃO"}):
+REGRAS ESPECÍFICAS DO MODO (${
+      analysisMode === "single" ? "ANÁLISE ÚNICA" : "COMPARAÇÃO"
+    }):
 ${rulesBlock}
 
 TOM: ${tone}.
@@ -667,7 +873,9 @@ ${JSON.stringify(schema)}
 
 VALIDAÇÕES FINAIS (antes de responder, confira cada item):
 ${validations}
-- "summary" deve ter entre 3 e 5 frases, citando explicitamente ${analysisMode === "single" ? "o perfil" : "os dois perfis"} pelo nome.
+- "summary" deve ter entre 3 e 5 frases, citando explicitamente ${
+      analysisMode === "single" ? "o perfil" : "os dois perfis"
+    } pelo nome.
 - Nenhum campo pode ficar vazio, com "N/A" ou com texto placeholder.`;
 
     const user =
@@ -734,8 +942,7 @@ ${validations}
     console.error(`[analyze] erro: ${message}`);
     return res.status(502).json({
       error: "Não foi possível concluir a análise.",
-      details:
-        process.env.NODE_ENV === "production" ? undefined : message,
+      details: process.env.NODE_ENV === "production" ? undefined : message,
       hint:
         AI_PROVIDER === "ollama"
           ? "Verifique se o Ollama está ativo, se o modelo foi baixado e se OLLAMA_BASE_URL está correto."
@@ -785,7 +992,6 @@ async function callProvider(args: {
     return body.message.content;
   }
 
-  // OpenAI-compatible (Groq, DeepSeek, OpenAI…)
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY não configurada no .env");
   }
@@ -813,7 +1019,9 @@ async function callProvider(args: {
 
   if (!response.ok) {
     const details = await response.text();
-    throw new Error(`Provider HTTP ${response.status}: ${details.slice(0, 400)}`);
+    throw new Error(
+      `Provider HTTP ${response.status}: ${details.slice(0, 400)}`
+    );
   }
 
   const body = (await response.json()) as {
@@ -888,7 +1096,7 @@ function normalizeReport(
     kpi: String(o.kpi || "A definir"),
   });
 
-  // ----- MODO ÚNICO -----
+  // MODO ÚNICO
   if (analysisMode === "single") {
     const actionPlan: ActionItem[] = Array.isArray(r.actionPlan)
       ? (r.actionPlan as Record<string, unknown>[]).slice(0, 6).map(normalizeAction)
@@ -907,7 +1115,7 @@ function normalizeReport(
     };
   }
 
-  // ----- MODO COMPARAÇÃO -----
+  // MODO COMPARAÇÃO
   const actionPlanA: ActionItem[] = Array.isArray(r.actionPlanA)
     ? (r.actionPlanA as Record<string, unknown>[]).slice(0, 5).map(normalizeAction)
     : [];
@@ -916,7 +1124,11 @@ function normalizeReport(
     ? (r.actionPlanB as Record<string, unknown>[]).slice(0, 5).map(normalizeAction)
     : [];
 
-  if (actionPlanA.length === 0 && actionPlanB.length === 0 && Array.isArray(r.actionPlan)) {
+  if (
+    actionPlanA.length === 0 &&
+    actionPlanB.length === 0 &&
+    Array.isArray(r.actionPlan)
+  ) {
     const all = (r.actionPlan as Record<string, unknown>[])
       .slice(0, 8)
       .map(normalizeAction);
@@ -971,16 +1183,21 @@ app.get(/^\/(?!api\/).*/, (_req, res, next) => {
 });
 
 /* =========================================================
-   Start
+   Start — UMA ÚNICA CHAMADA
    ========================================================= */
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", async () => {
+  await ensureAdminSeed();
   console.log(`🚀 Signal Grid em http://localhost:${PORT}`);
   console.log(`🌐 Ambiente: ${process.env.NODE_ENV || "development"}`);
   console.log(`🧠 Provider: ${AI_PROVIDER}`);
   if (AI_PROVIDER === "ollama") {
     console.log(`   └ Ollama: ${OLLAMA_BASE_URL} (modelo: ${OLLAMA_MODEL})`);
   } else {
-    console.log(`   └ OpenAI-compatible: ${OPENAI_BASE_URL} (modelo: ${OPENAI_MODEL})`);
-    console.log(`   └ API key: ${OPENAI_API_KEY ? "configurada ✅" : "FALTANDO ❌"}`);
+    console.log(
+      `   └ OpenAI-compatible: ${OPENAI_BASE_URL} (modelo: ${OPENAI_MODEL})`
+    );
+    console.log(
+      `   └ API key: ${OPENAI_API_KEY ? "configurada ✅" : "FALTANDO ❌"}`
+    );
   }
 });

@@ -8,9 +8,8 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     proxy: {
-      // Encaminha /api para o backend Express durante o dev
       "/api": {
-        target: "http://127.0.0.1:3000",
+        target: "http://127.0.0.1:3001",
         changeOrigin: true,
       },
     },

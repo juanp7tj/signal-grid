@@ -13,6 +13,8 @@ import {
   Instagram,
   Layers3,
   LoaderCircle,
+  Lock,
+  LogOut,
   Menu,
   Settings2,
   ShieldCheck,
@@ -21,16 +23,20 @@ import {
   Target,
   Trash2,
   TrendingUp,
+  UserPlus,
+  Users,
   X,
 } from "lucide-react";
 import type {
   ActionItem,
   AnalysisMode,
   AnalysisReport,
-  HistoryEntry,
+  AuthUser,
   HistorySummary,
+  ManagedUser,
   ProfileInput,
   Settings,
+  UserRole,
 } from "./types";
 
 /* =========================================================
@@ -542,7 +548,6 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <p className="print-summary">{report.summary}</p>
       </section>
 
-      {/* Modo COMPARE — visão geral + pilares */}
       {!single && (
         <>
           <section className="print-section">
@@ -621,7 +626,6 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         </>
       )}
 
-      {/* Modo SINGLE — diagnóstico do perfil */}
       {single && (
         <section className="print-section">
           <h2>01 · Diagnóstico do perfil</h2>
@@ -657,7 +661,6 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         </section>
       )}
 
-      {/* Oportunidades */}
       {report.opportunities.length > 0 && (
         <section className="print-section">
           <h2>{single ? "02" : "03"} · Oportunidades prioritárias</h2>
@@ -675,7 +678,6 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         </section>
       )}
 
-      {/* Plano de ação */}
       <section className="print-section">
         <h2>{single ? "03" : "04"} · Plano de ação</h2>
         <ol className="print-actions">
@@ -761,6 +763,26 @@ export default function App() {
   const [history, setHistory] = useState<HistorySummary[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  // Auth
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authToken, setAuthToken] = useState<string>(
+    () => localStorage.getItem("sg_token") || ""
+  );
+  const [authReady, setAuthReady] = useState(false);
+  const [loginUser, setLoginUser] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Admin — gerenciar usuários
+  const [showUsers, setShowUsers] = useState(false);
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([]);
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState<UserRole>("user");
+  const [userError, setUserError] = useState("");
+  const [userLoading, setUserLoading] = useState(false);
+
   const scoreDiff = useMemo(() => {
     if (mode !== "compare" || !report || report.profiles.length < 2) {
       return 0;
@@ -768,7 +790,6 @@ export default function App() {
     return report.profiles[0].overall - report.profiles[1].overall;
   }, [report, mode]);
 
-  // Ao trocar de modo, limpa o relatório atual
   function handleModeChange(next: AnalysisMode) {
     if (next === mode) return;
     setMode(next);
@@ -810,7 +831,10 @@ export default function App() {
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
         body: JSON.stringify({
           analysisMode: mode,
           profileA,
@@ -873,7 +897,9 @@ export default function App() {
   async function loadHistory() {
     setHistoryLoading(true);
     try {
-      const res = await fetch("/api/history");
+      const res = await fetch("/api/history", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       const text = await res.text();
       if (!text) return;
       const data = JSON.parse(text);
@@ -889,7 +915,9 @@ export default function App() {
 
   async function openHistoryEntry(id: string, print = false) {
     try {
-      const res = await fetch(`/api/history/${id}`);
+      const res = await fetch(`/api/history/${id}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       const text = await res.text();
       if (!text) return;
       const data = JSON.parse(text);
@@ -917,7 +945,10 @@ export default function App() {
 
   async function deleteHistoryEntry(id: string) {
     try {
-      await fetch(`/api/history/${id}`, { method: "DELETE" });
+      await fetch(`/api/history/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setHistory((h) => h.filter((e) => e.id !== id));
     } catch (e) {
       console.warn("[history] falha ao apagar:", e);
@@ -931,17 +962,226 @@ export default function App() {
       return;
     }
     try {
-      await fetch("/api/history", { method: "DELETE" });
+      await fetch("/api/history", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setHistory([]);
     } catch (e) {
       console.warn("[history] falha ao limpar:", e);
     }
   }
 
-  // Carrega o histórico na primeira renderização
+  /* =========================================================
+     Auth
+     ========================================================= */
+  async function doLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUser, password: loginPass }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Não foi possível entrar.");
+      }
+      localStorage.setItem("sg_token", data.token);
+      setAuthToken(data.token);
+      setAuthUser(data.user as AuthUser);
+      setLoginUser("");
+      setLoginPass("");
+    } catch (e) {
+      setLoginError(e instanceof Error ? e.message : "Falha ao entrar.");
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  function doLogout() {
+    localStorage.removeItem("sg_token");
+    setAuthToken("");
+    setAuthUser(null);
+    setReport(null);
+    setHistory([]);
+    setActiveTab("overview");
+  }
+
+  async function fetchUsers() {
+    try {
+      const res = await fetch("/api/auth/users", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+      if (data?.ok) setManagedUsers(data.users as ManagedUser[]);
+    } catch (e) {
+      console.warn("[users] falha:", e);
+    }
+  }
+
+  async function createUser(e: React.FormEvent) {
+    e.preventDefault();
+    setUserError("");
+    setUserLoading(true);
+    try {
+      const res = await fetch("/api/auth/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          username: newUsername,
+          password: newPassword,
+          role: newRole,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Não foi possível criar.");
+      }
+      setNewUsername("");
+      setNewPassword("");
+      setNewRole("user");
+      await fetchUsers();
+    } catch (e) {
+      setUserError(e instanceof Error ? e.message : "Falha ao criar.");
+    } finally {
+      setUserLoading(false);
+    }
+  }
+
+  async function deleteUser(id: string) {
+    if (!confirm("Apagar este usuário?")) return;
+    try {
+      await fetch(`/api/auth/users/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      await fetchUsers();
+    } catch (e) {
+      console.warn("[users] falha:", e);
+    }
+  }
+
+  // Verifica a sessão ao montar
   useEffect(() => {
-    loadHistory();
+    (async () => {
+      if (!authToken) {
+        setAuthReady(true);
+        return;
+      }
+      try {
+        const res = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        const data = await res.json();
+        if (res.ok && data?.ok) {
+          setAuthUser(data.user as AuthUser);
+        } else {
+          localStorage.removeItem("sg_token");
+          setAuthToken("");
+        }
+      } catch {
+        localStorage.removeItem("sg_token");
+        setAuthToken("");
+      } finally {
+        setAuthReady(true);
+      }
+    })();
   }, []);
+
+  // Carrega o histórico quando o usuário está logado
+  useEffect(() => {
+    if (authUser) {
+      loadHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser]);
+
+  /* =========================================================
+     Tela de login (retornos condicionais)
+     ========================================================= */
+  if (!authReady) {
+    return (
+      <div className="login-screen">
+        <div className="login-card login-loading">
+          <LoaderCircle className="spin" size={24} />
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="login-screen">
+        <form className="login-card" onSubmit={doLogin}>
+          <div className="login-brand">
+            <div className="brand-mark">
+              <span>//</span>SG
+            </div>
+            <div>
+              <strong>SIGNAL GRID</strong>
+              <small>COMPETITIVE INTELLIGENCE</small>
+            </div>
+          </div>
+
+          <h2>Acessar plataforma</h2>
+          <p className="login-sub">
+            Entre com suas credenciais para continuar.
+          </p>
+
+          {loginError && (
+            <div className="error-banner">
+              <CircleHelp size={16} />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <label>
+            Usuário
+            <input
+              value={loginUser}
+              onChange={(e) => setLoginUser(e.target.value)}
+              placeholder="seu usuário"
+              autoFocus
+              autoComplete="username"
+              required
+            />
+          </label>
+
+          <label>
+            Senha
+            <input
+              type="password"
+              value={loginPass}
+              onChange={(e) => setLoginPass(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              required
+            />
+          </label>
+
+          <button
+            className="button-primary login-submit"
+            type="submit"
+            disabled={loginLoading}
+          >
+            {loginLoading ? (
+              <LoaderCircle className="spin" size={16} />
+            ) : (
+              <Lock size={16} />
+            )}
+            {loginLoading ? "ENTRANDO..." : "ENTRAR"}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -1005,6 +1245,16 @@ export default function App() {
           </button>
 
           <span className="nav-caption nav-caption-spaced">SISTEMA</span>
+          {authUser.role === "admin" && (
+            <button
+              onClick={() => {
+                setShowUsers(true);
+                fetchUsers();
+              }}
+            >
+              <Users size={17} /> Usuários
+            </button>
+          )}
           <button onClick={() => setShowSettings(true)}>
             <Settings2 size={17} /> Personalização
           </button>
@@ -1019,7 +1269,7 @@ export default function App() {
             </div>
           </div>
           <div className="sidebar-foot">
-            <span>BUILD 1.1.0</span>
+            <span>BUILD 1.2.0</span>
             <span>PT-BR</span>
           </div>
         </div>
@@ -1076,6 +1326,15 @@ export default function App() {
               onClick={() => setShowSettings(true)}
             >
               <SlidersHorizontal size={17} />
+            </button>
+            <span className="user-chip" title={authUser.username}>
+              {authUser.username}
+              <span className={`role-tag role-${authUser.role}`}>
+                {authUser.role}
+              </span>
+            </span>
+            <button className="icon-button" title="Sair" onClick={doLogout}>
+              <LogOut size={16} />
             </button>
             <div className="avatar">SG</div>
           </div>
@@ -1675,6 +1934,119 @@ export default function App() {
                 <Trash2 size={14} /> LIMPAR TUDO
               </button>
             )}
+          </section>
+        </div>
+      )}
+
+      {showUsers && authUser.role === "admin" && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setShowUsers(false)}
+        >
+          <section
+            className="settings-modal users-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <span className="eyebrow">ADMIN / USUÁRIOS</span>
+                <h2>Gerenciar usuários</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setShowUsers(false)}
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p>
+              Crie contas comuns ou administradores. Contas comuns veem
+              apenas Visão geral, Comparar perfis e Plano de ação.
+            </p>
+
+            <form className="user-create-form" onSubmit={createUser}>
+              <label>
+                Usuário
+                <input
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  placeholder="ex.: joao"
+                  required
+                />
+              </label>
+              <label>
+                Senha
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="mínimo 6 caracteres"
+                  required
+                />
+              </label>
+              <label>
+                Tipo
+                <select
+                  value={newRole}
+                  onChange={(e) =>
+                    setNewRole(e.target.value as UserRole)
+                  }
+                >
+                  <option value="user">Conta comum</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </label>
+              <button
+                className="button-primary"
+                type="submit"
+                disabled={userLoading}
+              >
+                {userLoading ? (
+                  <LoaderCircle className="spin" size={16} />
+                ) : (
+                  <UserPlus size={16} />
+                )}
+                {userLoading ? "CRIANDO..." : "CRIAR"}
+              </button>
+            </form>
+
+            {userError && (
+              <div className="error-banner">
+                <CircleHelp size={16} />
+                <span>{userError}</span>
+              </div>
+            )}
+
+            <div className="users-list">
+              <span className="eyebrow">CONTAS ATIVAS</span>
+              {managedUsers.map((u) => (
+                <div className="user-row" key={u.id}>
+                  <div className="user-info">
+                    <strong>{u.username}</strong>
+                    <span className={`role-tag role-${u.role}`}>
+                      {u.role}
+                    </span>
+                  </div>
+                  {u.role !== "admin" ? (
+                    <button
+                      className="icon-button"
+                      title="Apagar"
+                      onClick={() => deleteUser(u.id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : (
+                    <span className="user-locked" title="Admin protegido">
+                      <Lock size={14} />
+                    </span>
+                  )}
+                </div>
+              ))}
+              {managedUsers.length === 0 && (
+                <p className="muted">Nenhuma conta cadastrada ainda.</p>
+              )}
+            </div>
           </section>
         </div>
       )}
