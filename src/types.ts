@@ -70,3 +70,18 @@ export type Settings = {
   tone: string;
   model: string;
 };
+
+/* ---------- Histórico ---------- */
+export type HistorySummary = {
+  id: string;
+  createdAt: string;
+  analysisMode: AnalysisMode;
+  title: string;
+  summary: string;
+  profileNames: string[];
+  overallScores: number[];
+};
+
+export type HistoryEntry = HistorySummary & {
+  report: AnalysisReport;
+};

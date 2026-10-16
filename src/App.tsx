@@ -1,14 +1,34 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowDownRight, ArrowUpRight, BarChart3, Check, ChevronRight,
-  CircleHelp, FileText, Gauge, Instagram, Layers3,
-  LoaderCircle, Menu, Settings2, ShieldCheck, SlidersHorizontal, Sparkles,
-  Target, TrendingUp, X
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  BarChart3,
+  Check,
+  ChevronRight,
+  CircleHelp,
+  FileText,
+  Gauge,
+  History,
+  Instagram,
+  Layers3,
+  LoaderCircle,
+  Menu,
+  Settings2,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  Target,
+  Trash2,
+  TrendingUp,
+  X,
 } from "lucide-react";
 import type {
   ActionItem,
   AnalysisMode,
   AnalysisReport,
+  HistoryEntry,
+  HistorySummary,
   ProfileInput,
   Settings,
 } from "./types";
@@ -16,6 +36,7 @@ import type {
 /* =========================================================
    Constantes
    ========================================================= */
+
 const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 const initialA: ProfileInput = {
@@ -710,16 +731,10 @@ export default function App() {
   const [evidence, setEvidence] = useState("");
   const [demoMode, setDemoMode] = useState(false);
 
-  const scoreDiff = useMemo(() => {
-    if (
-      mode !== "compare" ||
-      !report ||
-      report.profiles.length < 2
-    ) {
-      return 0;
-    }
-    return report.profiles[0].overall - report.profiles[1].overall;
-  }, [report, mode]);
+  // ⬇️ AQUI os três novos
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<HistorySummary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Ao trocar de modo, limpa o relatório atual
   function handleModeChange(next: AnalysisMode) {
@@ -803,6 +818,80 @@ export default function App() {
   const topScore = report?.profiles[0];
   const single = report?.analysisMode === "single";
   const compare = report?.analysisMode === "compare";
+  /* =========================================================
+     Histórico
+     ========================================================= */
+  async function loadHistory() {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/history");
+      const text = await res.text();
+      if (!text) return;
+      const data = JSON.parse(text);
+      if (data?.ok && Array.isArray(data.entries)) {
+        setHistory(data.entries);
+      }
+    } catch (e) {
+      console.warn("[history] falha ao carregar:", e);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  async function openHistoryEntry(id: string, print = false) {
+  try {
+    const res = await fetch(`/api/history/${id}`);
+    const text = await res.text();
+    if (!text) return;
+    const data = JSON.parse(text);
+    if (data?.ok && data.entry?.report) {
+      setReport(data.entry.report as AnalysisReport);
+      setActiveTab("overview");
+      setHistoryOpen(false);
+
+      if (print) {
+        // Aguarda o React renderizar o ReportPrintView antes de imprimir
+        window.setTimeout(() => {
+          document.body.classList.add("printing-report");
+          window.print();
+          window.setTimeout(() => {
+            document.body.classList.remove("printing-report");
+          }, 500);
+        }, 300);
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  } catch (e) {
+    console.warn("[history] falha ao abrir:", e);
+  }
+}
+
+  async function deleteHistoryEntry(id: string) {
+    try {
+      await fetch(`/api/history/${id}`, { method: "DELETE" });
+      setHistory((h) => h.filter((e) => e.id !== id));
+    } catch (e) {
+      console.warn("[history] falha ao apagar:", e);
+    }
+  }
+
+  async function clearHistory() {
+    if (!confirm("Apagar todo o histórico? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+    try {
+      await fetch("/api/history", { method: "DELETE" });
+      setHistory([]);
+    } catch (e) {
+      console.warn("[history] falha ao limpar:", e);
+    }
+  }
+
+  // Carrega o histórico na primeira renderização
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   return (
     <div className="app-shell">
@@ -916,6 +1005,16 @@ export default function App() {
             </span>
           </div>
           <div className="topbar-right">
+                        <button
+              className="icon-button"
+              title="Histórico de análises"
+              onClick={() => {
+                setHistoryOpen(true);
+                loadHistory();
+              }}
+            >
+              <History size={17} />
+            </button>
             <span className="system-status">
               <span className="pulse-dot" /> SISTEMA OPERACIONAL
             </span>
@@ -1406,6 +1505,94 @@ export default function App() {
           </footer>
         </div>
       </main>
+
+      {historyOpen && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setHistoryOpen(false)}
+        >
+          <section
+            className="settings-modal history-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <span className="eyebrow">HISTÓRICO / ANÁLISES</span>
+                <h2>Análises anteriores</h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setHistoryOpen(false)}
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p>
+              {history.length === 0
+                ? "Nenhuma análise guardada ainda. Gere um diagnóstico para começar."
+                : `${history.length} análise(s) guardada(s) neste servidor.`}
+            </p>
+
+            {history.length > 0 && (
+              <div className="history-list">
+                {history.map((h) => (
+                  <div className="history-item" key={h.id}>
+                    <button
+                      className="history-item-main"
+                      onClick={() => openHistoryEntry(h.id)}
+                    >
+                      <div className="history-item-top">
+                        <span className={`mode-tag ${h.analysisMode}`}>
+                          {h.analysisMode === "compare" ? "COMPARAÇÃO" : "ÚNICA"}
+                        </span>
+                        <span className="history-date">
+                          {formatDate(h.createdAt)}
+                        </span>
+                      </div>
+                      <strong className="history-title">{h.title}</strong>
+                      <p className="history-summary">{h.summary}</p>
+                      <div className="history-scores">
+                        {h.profileNames.map((name, i) => (
+                          <span key={name} className="history-score">
+                            {name}
+                            <strong>
+                              {h.overallScores[i]?.toFixed(1) ?? "—"}
+                            </strong>
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                    <button
+                      className="icon-button history-pdf"
+                      onClick={() => openHistoryEntry(h.id, true)}
+                      title="Baixar PDF"
+                        >
+                        <FileText size={14} />
+</button>
+                    <button
+                      className="icon-button history-delete"
+                      onClick={() => deleteHistoryEntry(h.id)}
+                      title="Apagar"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {history.length > 0 && (
+              <button
+                className="text-button history-clear"
+                onClick={clearHistory}
+              >
+                <Trash2 size={14} /> LIMPAR TUDO
+              </button>
+            )}
+          </section>
+        </div>
+      )}
 
       {showSettings && (
         <div
