@@ -77,6 +77,7 @@ type ActionItem = {
 
 type HistoryEntry = {
   id: string;
+  userId: string; // 🔒 dono da análise
   createdAt: string;
   analysisMode: "single" | "compare";
   title: string;
@@ -650,18 +651,21 @@ app.delete("/api/auth/users/:id", requireAuth, requireAdmin, async (req, res) =>
 /* =========================================================
    /api/history
    ========================================================= */
-app.get("/api/history", requireAuth, async (_req, res) => {
+app.get("/api/history", requireAuth, async (req, res) => {
   try {
+    const userId = (req as any).auth.uid;
     const entries = await readHistory();
-    const summaries = entries.map((e) => ({
-      id: e.id,
-      createdAt: e.createdAt,
-      analysisMode: e.analysisMode,
-      title: e.title,
-      summary: e.summary,
-      profileNames: e.profileNames,
-      overallScores: e.overallScores,
-    }));
+    const summaries = entries
+      .filter((e) => e.userId === userId)
+      .map((e) => ({
+        id: e.id,
+        createdAt: e.createdAt,
+        analysisMode: e.analysisMode,
+        title: e.title,
+        summary: e.summary,
+        profileNames: e.profileNames,
+        overallScores: e.overallScores,
+      }));
     res.json({ ok: true, entries: summaries });
   } catch (error) {
     res.status(500).json({
@@ -673,10 +677,16 @@ app.get("/api/history", requireAuth, async (_req, res) => {
 
 app.get("/api/history/:id", requireAuth, async (req, res) => {
   try {
+    const userId = (req as any).auth.uid;
+    const role = (req as any).auth.role;
     const entries = await readHistory();
     const entry = entries.find((e) => e.id === req.params.id);
     if (!entry) {
       return res.status(404).json({ error: "Análise não encontrada." });
+    }
+    // Admin vê tudo; usuário comum só vê o próprio
+    if (role !== "admin" && entry.userId !== userId) {
+      return res.status(403).json({ error: "Sem permissão para ver esta análise." });
     }
     res.json({ ok: true, entry });
   } catch (error) {
@@ -689,7 +699,16 @@ app.get("/api/history/:id", requireAuth, async (req, res) => {
 
 app.delete("/api/history/:id", requireAuth, async (req, res) => {
   try {
+    const userId = (req as any).auth.uid;
+    const role = (req as any).auth.role;
     const entries = await readHistory();
+    const target = entries.find((e) => e.id === req.params.id);
+    if (!target) {
+      return res.status(404).json({ error: "Análise não encontrada." });
+    }
+    if (role !== "admin" && target.userId !== userId) {
+      return res.status(403).json({ error: "Sem permissão para apagar esta análise." });
+    }
     const filtered = entries.filter((e) => e.id !== req.params.id);
     await writeHistory(filtered);
     res.json({ ok: true });
@@ -701,9 +720,13 @@ app.delete("/api/history/:id", requireAuth, async (req, res) => {
   }
 });
 
-app.delete("/api/history", requireAuth, async (_req, res) => {
+app.delete("/api/history", requireAuth, async (req, res) => {
   try {
-    await writeHistory([]);
+    const userId = (req as any).auth.uid;
+    const entries = await readHistory();
+    // Apaga só as análises do usuário logado; mantém as dos outros
+    const remaining = entries.filter((e) => e.userId !== userId);
+    await writeHistory(remaining);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({
@@ -922,10 +945,12 @@ ${validations}
     const parsed = extractJson(content);
     const report = normalizeReport(parsed, a, b, analysisMode);
 
-    try {
+        try {
+      const userId = (req as any).auth.uid;
       const entries = await readHistory();
       const newEntry: HistoryEntry = {
         id: makeId(),
+        userId,
         createdAt: new Date().toISOString(),
         analysisMode: report.analysisMode,
         title: report.title,
@@ -935,7 +960,15 @@ ${validations}
         report,
       };
       entries.unshift(newEntry);
-      await writeHistory(entries.slice(0, HISTORY_MAX));
+
+      // Limita por usuário (não global). Cada usuário tem até HISTORY_MAX entradas.
+      const userEntries = entries.filter((e) => e.userId === userId).slice(0, HISTORY_MAX);
+      const otherEntries = entries.filter((e) => e.userId !== userId);
+      const limited = [...userEntries, ...otherEntries].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      await writeHistory(limited);
     } catch (e) {
       console.error("[history] falha ao salvar:", e);
     }
