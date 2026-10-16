@@ -7,6 +7,18 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 /* =========================================================
+   Express — extensão de tipos (propriedades customizadas)
+   ========================================================= */
+declare global {
+  namespace Express {
+    interface Request {
+      _loginIp?: string;
+      auth?: { uid: string; role: string };
+    }
+  }
+}
+
+/* =========================================================
    Config
    ========================================================= */
 const app = express();
@@ -131,7 +143,7 @@ function loginRateLimit(req: any, res: any, next: any) {
     loginAttempts.delete(ip);
   }
 
-  req._loginIp = ip;
+    (req as any)._loginIp = ip;
   next();
 }
 
@@ -336,12 +348,12 @@ function requireAuth(req: any, res: any, next: any) {
   if (!payload) {
     return res.status(401).json({ error: "Não autenticado." });
   }
-  req.auth = payload;
+    (req as any).auth = payload;
   next();
 }
 
 function requireAdmin(req: any, res: any, next: any) {
-  if (req.auth?.role !== "admin") {
+    if ((req as any).auth?.role !== "admin") {
     return res.status(403).json({ error: "Acesso restrito a administradores." });
   }
   next();
@@ -669,7 +681,7 @@ app.get("/api/health", (_req, res) => {
 app.post("/api/auth/login", loginRateLimit, async (req, res) => {
   const username = String(req.body?.username || "").trim();
   const password = String(req.body?.password || "");
-  const ip = req._loginIp;
+    const ip = (req as any)._loginIp || req.ip || "unknown";
 
   if (!username || !password) {
     registerLoginFailure(ip);

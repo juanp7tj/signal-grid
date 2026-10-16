@@ -3,27 +3,110 @@ import express from "express";
 import cors from "cors";
 import path from "node:path";
 import fs from "node:fs/promises";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 /* =========================================================
    Config
    ========================================================= */
 const app = express();
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || 3001);
+const NODE_ENV = process.env.NODE_ENV || "development";
+const IS_PRODUCTION = NODE_ENV === "production";
 const AI_PROVIDER = (process.env.AI_PROVIDER || "openai-compatible");
 const HISTORY_DIR = path.resolve(process.cwd(), "data");
 const HISTORY_FILE = path.join(HISTORY_DIR, "history.json");
+const USERS_FILE = path.join(HISTORY_DIR, "users.json");
 const HISTORY_MAX = 50;
+// Auth
+const AUTH_SECRET = process.env.AUTH_SECRET || "signal-grid-secret-troque-em-producao";
+const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 dias
 // Ollama
 const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/+$/, "");
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5:3b";
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || "";
-// OpenAI-compatible (Groq, DeepSeek, OpenAI, etc.)
+// OpenAI-compatible
 const OPENAI_BASE_URL = (process.env.OPENAI_BASE_URL || "https://api.groq.com/openai").replace(/\/+$/, "");
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "openai/gpt-oss-120b";
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 300_000);
-app.use(cors());
+/* =========================================================
+   Segurança — avisos no boot
+   ========================================================= */
+if (IS_PRODUCTION && AUTH_SECRET.includes("troque")) {
+    console.error("❌ ERRO: Em produção você DEVE configurar AUTH_SECRET com uma string longa e aleatória.");
+    process.exit(1);
+}
+if (IS_PRODUCTION && !OPENAI_API_KEY) {
+    console.error("❌ ERRO: OPENAI_API_KEY não configurada em produção.");
+    process.exit(1);
+}
+if (IS_PRODUCTION && !process.env.ALLOWED_ORIGIN) {
+    console.warn("⚠️  ALLOWED_ORIGIN não configurado. CORS vai aceitar só mesma origem.");
+}
+/* =========================================================
+   Middlewares globais
+   ========================================================= */
+// CORS — em produção, só aceita a origem configurada
+const allowedOrigin = process.env.ALLOWED_ORIGIN || "*";
+app.use(cors({
+    origin: IS_PRODUCTION ? allowedOrigin : true,
+    credentials: false,
+}));
 app.use(express.json({ limit: "1mb" }));
+// Esconde o header "X-Powered-By: Express"
+app.disable("x-powered-by");
+// Headers de segurança básicos
+app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+    next();
+});
+// Em produção, força HTTPS
+if (IS_PRODUCTION) {
+    app.use((req, res, next) => {
+        if (req.headers["x-forwarded-proto"] !== "https") {
+            return res.redirect(301, `https://${req.headers.host}${req.url}`);
+        }
+        next();
+    });
+}
+/* =========================================================
+   Rate limit — anti brute-force (em memória)
+   ========================================================= */
+const loginAttempts = new Map();
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_BLOCK_MS = 1000 * 60 * 15; // 15 min
+function loginRateLimit(req, res, next) {
+    const ip = req.ip || req.connection?.remoteAddress || "unknown";
+    const now = Date.now();
+    const record = loginAttempts.get(ip);
+    if (record && record.blockedUntil > now) {
+        const secondsLeft = Math.ceil((record.blockedUntil - now) / 1000);
+        return res.status(429).json({
+            error: `Muitas tentativas. Tente novamente em ${secondsLeft}s.`,
+        });
+    }
+    if (record && record.blockedUntil <= now) {
+        loginAttempts.delete(ip);
+    }
+    req._loginIp = ip;
+    next();
+}
+function registerLoginFailure(ip) {
+    const now = Date.now();
+    const record = loginAttempts.get(ip) || { count: 0, blockedUntil: 0 };
+    record.count += 1;
+    if (record.count >= LOGIN_MAX_ATTEMPTS) {
+        record.blockedUntil = now + LOGIN_BLOCK_MS;
+        record.count = 0;
+    }
+    loginAttempts.set(ip, record);
+}
+function registerLoginSuccess(ip) {
+    loginAttempts.delete(ip);
+}
 /* =========================================================
    Validação / sanitização
    ========================================================= */
@@ -50,7 +133,7 @@ function isInstagramUrl(value) {
     }
 }
 /* =========================================================
-   HISTÓRICO — persistência em arquivo JSON
+   Persistência — histórico
    ========================================================= */
 async function readHistory() {
     try {
@@ -71,7 +154,99 @@ function makeId() {
     return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 }
 /* =========================================================
-   Relatório demonstrativo (single + compare)
+   AUTH — helpers
+   ========================================================= */
+function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString("hex");
+    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return `${salt}:${hash}`;
+}
+function verifyPassword(password, stored) {
+    const [salt, hash] = stored.split(":");
+    if (!salt || !hash)
+        return false;
+    const test = crypto.scryptSync(password, salt, 64).toString("hex");
+    const a = Buffer.from(hash, "hex");
+    const b = Buffer.from(test, "hex");
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+function makeToken(payload) {
+    const body = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + TOKEN_TTL_MS })).toString("base64url");
+    const sig = crypto
+        .createHmac("sha256", AUTH_SECRET)
+        .update(body)
+        .digest("base64url");
+    return `${body}.${sig}`;
+}
+function verifyToken(token) {
+    try {
+        const [body, sig] = token.split(".");
+        if (!body || !sig)
+            return null;
+        const expected = crypto
+            .createHmac("sha256", AUTH_SECRET)
+            .update(body)
+            .digest("base64url");
+        if (sig !== expected)
+            return null;
+        const parsed = JSON.parse(Buffer.from(body, "base64url").toString());
+        if (typeof parsed.exp !== "number" || parsed.exp < Date.now())
+            return null;
+        return { uid: parsed.uid, role: parsed.role };
+    }
+    catch {
+        return null;
+    }
+}
+async function readUsers() {
+    try {
+        await fs.mkdir(HISTORY_DIR, { recursive: true });
+        const raw = await fs.readFile(USERS_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    }
+    catch {
+        return [];
+    }
+}
+async function writeUsers(users) {
+    await fs.mkdir(HISTORY_DIR, { recursive: true });
+    await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+}
+async function ensureAdminSeed() {
+    const users = await readUsers();
+    if (users.some((u) => u.role === "admin"))
+        return;
+    const admin = {
+        id: makeId(),
+        username: "admin",
+        passwordHash: hashPassword("admin123"),
+        plainPassword: "admin123",
+        role: "admin",
+        createdAt: new Date().toISOString(),
+    };
+    users.push(admin);
+    await writeUsers(users);
+    console.log("[auth] Admin padrão criado → usuário: admin | senha: admin123 (TROQUE IMEDIATAMENTE)");
+}
+function requireAuth(req, res, next) {
+    const header = req.headers["authorization"] || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+    const payload = verifyToken(token);
+    if (!payload) {
+        return res.status(401).json({ error: "Não autenticado." });
+    }
+    req.auth = payload;
+    next();
+}
+function requireAdmin(req, res, next) {
+    if (req.auth?.role !== "admin") {
+        return res.status(403).json({ error: "Acesso restrito a administradores." });
+    }
+    next();
+}
+/* =========================================================
+   Relatório demonstrativo
    ========================================================= */
 function demoReport(a, b) {
     const single = !b;
@@ -369,12 +544,118 @@ app.get("/api/health", (_req, res) => {
     res.json({ ok: true });
 });
 /* =========================================================
-   /api/history
+   AUTH — rotas
    ========================================================= */
-app.get("/api/history", async (_req, res) => {
+// Login — com rate limit
+app.post("/api/auth/login", loginRateLimit, async (req, res) => {
+    const username = String(req.body?.username || "").trim();
+    const password = String(req.body?.password || "");
+    const ip = req._loginIp || req.ip || "unknown";
+    if (!username || !password) {
+        registerLoginFailure(ip);
+        return res.status(400).json({ error: "Informe usuário e senha." });
+    }
+    const users = await readUsers();
+    const user = users.find((u) => u.username === username);
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+        registerLoginFailure(ip);
+        return res.status(401).json({ error: "Usuário ou senha inválidos." });
+    }
+    registerLoginSuccess(ip);
+    const token = makeToken({ uid: user.id, role: user.role });
+    res.json({
+        ok: true,
+        token,
+        user: {
+            id: user.id,
+            username: user.username,
+            role: user.role,
+        },
+    });
+});
+// Sessão atual
+app.get("/api/auth/me", requireAuth, async (req, res) => {
+    const users = await readUsers();
+    const user = users.find((u) => u.id === req.auth.uid);
+    if (!user)
+        return res.status(401).json({ error: "Sessão inválida." });
+    res.json({
+        ok: true,
+        user: { id: user.id, username: user.username, role: user.role },
+    });
+});
+// Listar usuários (admin)
+app.get("/api/auth/users", requireAuth, requireAdmin, async (_req, res) => {
+    const users = await readUsers();
+    res.json({
+        ok: true,
+        users: users.map((u) => ({
+            id: u.id,
+            username: u.username,
+            role: u.role,
+            createdAt: u.createdAt,
+            password: u.plainPassword || "—",
+        })),
+    });
+});
+// Criar usuário (admin)
+app.post("/api/auth/users", requireAuth, requireAdmin, async (req, res) => {
+    const username = String(req.body?.username || "").trim();
+    const password = String(req.body?.password || "");
+    const role = req.body?.role === "admin" ? "admin" : "user";
+    if (username.length < 3) {
+        return res.status(400).json({ error: "Usuário precisa ter 3+ caracteres." });
+    }
+    if (password.length < 8) {
+        return res.status(400).json({ error: "Senha precisa ter 8+ caracteres." });
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+        return res
+            .status(400)
+            .json({ error: "Usuário só pode conter letras, números, ponto, hífen e _." });
+    }
+    const users = await readUsers();
+    if (users.some((u) => u.username === username)) {
+        return res.status(409).json({ error: "Usuário já existe." });
+    }
+    const user = {
+        id: makeId(),
+        username,
+        passwordHash: hashPassword(password),
+        plainPassword: password,
+        role,
+        createdAt: new Date().toISOString(),
+    };
+    users.push(user);
+    await writeUsers(users);
+    res.json({
+        ok: true,
+        user: { id: user.id, username: user.username, role: user.role },
+    });
+});
+// Remover usuário (admin)
+app.delete("/api/auth/users/:id", requireAuth, requireAdmin, async (req, res) => {
+    const users = await readUsers();
+    const target = users.find((u) => u.id === req.params.id);
+    if (!target)
+        return res.status(404).json({ error: "Usuário não encontrado." });
+    if (target.role === "admin") {
+        return res.status(403).json({ error: "Não é possível remover um admin." });
+    }
+    const filtered = users.filter((u) => u.id !== req.params.id);
+    await writeUsers(filtered);
+    res.json({ ok: true });
+});
+/* =========================================================
+   /api/history — por usuário
+   ========================================================= */
+app.get("/api/history", requireAuth, async (req, res) => {
     try {
+        const userId = req.auth.uid;
         const entries = await readHistory();
-        const summaries = entries.map((e) => ({
+        const summaries = entries
+            .filter((e) => e.userId === userId)
+            .map((e) => ({
             id: e.id,
             createdAt: e.createdAt,
             analysisMode: e.analysisMode,
@@ -392,12 +673,17 @@ app.get("/api/history", async (_req, res) => {
         });
     }
 });
-app.get("/api/history/:id", async (req, res) => {
+app.get("/api/history/:id", requireAuth, async (req, res) => {
     try {
+        const userId = req.auth.uid;
+        const role = req.auth.role;
         const entries = await readHistory();
         const entry = entries.find((e) => e.id === req.params.id);
         if (!entry) {
             return res.status(404).json({ error: "Análise não encontrada." });
+        }
+        if (role !== "admin" && entry.userId !== userId) {
+            return res.status(403).json({ error: "Sem permissão." });
         }
         res.json({ ok: true, entry });
     }
@@ -408,9 +694,18 @@ app.get("/api/history/:id", async (req, res) => {
         });
     }
 });
-app.delete("/api/history/:id", async (req, res) => {
+app.delete("/api/history/:id", requireAuth, async (req, res) => {
     try {
+        const userId = req.auth.uid;
+        const role = req.auth.role;
         const entries = await readHistory();
+        const target = entries.find((e) => e.id === req.params.id);
+        if (!target) {
+            return res.status(404).json({ error: "Análise não encontrada." });
+        }
+        if (role !== "admin" && target.userId !== userId) {
+            return res.status(403).json({ error: "Sem permissão." });
+        }
         const filtered = entries.filter((e) => e.id !== req.params.id);
         await writeHistory(filtered);
         res.json({ ok: true });
@@ -422,9 +717,13 @@ app.delete("/api/history/:id", async (req, res) => {
         });
     }
 });
-app.delete("/api/history", async (_req, res) => {
+app.delete("/api/history", requireAuth, async (req, res) => {
     try {
-        await writeHistory([]);
+        const userId = req.auth.uid;
+        const entries = await readHistory();
+        // Apaga só as análises do usuário logado; mantém as dos outros
+        const remaining = entries.filter((e) => e.userId !== userId);
+        await writeHistory(remaining);
         res.json({ ok: true });
     }
     catch (error) {
@@ -435,9 +734,9 @@ app.delete("/api/history", async (_req, res) => {
     }
 });
 /* =========================================================
-   Debug interno — só em desenvolvimento
+   Debug interno — SOMENTE em dev
    ========================================================= */
-if (process.env.NODE_ENV !== "production") {
+if (!IS_PRODUCTION) {
     app.get("/api/_debug/health", async (_req, res) => {
         const providerInfo = {
             provider: AI_PROVIDER,
@@ -494,7 +793,7 @@ if (process.env.NODE_ENV !== "production") {
 /* =========================================================
    Análise principal
    ========================================================= */
-app.post("/api/analyze", async (req, res) => {
+app.post("/api/analyze", requireAuth, async (req, res) => {
     try {
         const analysisMode = req.body?.analysisMode === "single" ? "single" : "compare";
         const a = safeProfile(req.body?.profileA);
@@ -520,7 +819,7 @@ app.post("/api/analyze", async (req, res) => {
         const model = AI_PROVIDER === "ollama"
             ? String(OLLAMA_MODEL).slice(0, 100)
             : String(OPENAI_MODEL).slice(0, 100);
-        console.log(`[analyze] mode=${analysisMode} provider=${AI_PROVIDER} model=${model}`);
+        console.log(`[analyze] user=${req.auth.uid} mode=${analysisMode} provider=${AI_PROVIDER} model=${model}`);
         const schema = analysisMode === "single" ? schemaSingle : schemaCompare;
         const rulesBlock = analysisMode === "single"
             ? `13. O array "profiles" deve conter EXATAMENTE 1 item.
@@ -617,9 +916,11 @@ ${validations}
         const parsed = extractJson(content);
         const report = normalizeReport(parsed, a, b, analysisMode);
         try {
+            const userId = req.auth.uid;
             const entries = await readHistory();
             const newEntry = {
                 id: makeId(),
+                userId,
                 createdAt: new Date().toISOString(),
                 analysisMode: report.analysisMode,
                 title: report.title,
@@ -629,7 +930,13 @@ ${validations}
                 report,
             };
             entries.unshift(newEntry);
-            await writeHistory(entries.slice(0, HISTORY_MAX));
+            // Limita por usuário (não global)
+            const userEntries = entries
+                .filter((e) => e.userId === userId)
+                .slice(0, HISTORY_MAX);
+            const otherEntries = entries.filter((e) => e.userId !== userId);
+            const limited = [...userEntries, ...otherEntries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            await writeHistory(limited);
         }
         catch (e) {
             console.error("[history] falha ao salvar:", e);
@@ -641,7 +948,7 @@ ${validations}
         console.error(`[analyze] erro: ${message}`);
         return res.status(502).json({
             error: "Não foi possível concluir a análise.",
-            details: process.env.NODE_ENV === "production" ? undefined : message,
+            details: IS_PRODUCTION ? undefined : message,
             hint: AI_PROVIDER === "ollama"
                 ? "Verifique se o Ollama está ativo, se o modelo foi baixado e se OLLAMA_BASE_URL está correto."
                 : "Verifique a configuração do provedor de IA, a chave de API, os créditos disponíveis e a URL do serviço.",
@@ -682,7 +989,6 @@ async function callProvider(args) {
         }
         return body.message.content;
     }
-    // OpenAI-compatible (Groq, DeepSeek, OpenAI…)
     if (!OPENAI_API_KEY) {
         throw new Error("OPENAI_API_KEY não configurada no .env");
     }
@@ -763,7 +1069,6 @@ function normalizeReport(raw, a, b, analysisMode) {
         owner: String(o.owner || "Social Media"),
         kpi: String(o.kpi || "A definir"),
     });
-    // ----- MODO ÚNICO -----
     if (analysisMode === "single") {
         const actionPlan = Array.isArray(r.actionPlan)
             ? r.actionPlan.slice(0, 6).map(normalizeAction)
@@ -780,14 +1085,15 @@ function normalizeReport(raw, a, b, analysisMode) {
             mode: AI_PROVIDER,
         };
     }
-    // ----- MODO COMPARAÇÃO -----
     const actionPlanA = Array.isArray(r.actionPlanA)
         ? r.actionPlanA.slice(0, 5).map(normalizeAction)
         : [];
     const actionPlanB = Array.isArray(r.actionPlanB)
         ? r.actionPlanB.slice(0, 5).map(normalizeAction)
         : [];
-    if (actionPlanA.length === 0 && actionPlanB.length === 0 && Array.isArray(r.actionPlan)) {
+    if (actionPlanA.length === 0 &&
+        actionPlanB.length === 0 &&
+        Array.isArray(r.actionPlan)) {
         const all = r.actionPlan
             .slice(0, 8)
             .map(normalizeAction);
@@ -831,19 +1137,32 @@ function normalizeReport(raw, a, b, analysisMode) {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientDist = path.resolve(__dirname, "../dist");
-app.use(express.static(clientDist));
+app.use(express.static(clientDist, { dotfiles: "deny" }));
+// Qualquer rota que NÃO seja /api/* serve o index.html (SPA fallback)
 app.get(/^\/(?!api\/).*/, (_req, res, next) => {
     res.sendFile(path.join(clientDist, "index.html"), (error) => {
         if (error)
             next();
     });
 });
+// Handler de erros — sempre JSON
+app.use((err, _req, res, _next) => {
+    console.error("[global error]", err);
+    if (res.headersSent)
+        return;
+    res.status(500).json({
+        error: "Erro interno no servidor.",
+        details: IS_PRODUCTION ? undefined : String(err?.message || err),
+    });
+});
 /* =========================================================
    Start
    ========================================================= */
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", async () => {
+    await ensureAdminSeed();
     console.log(`🚀 Signal Grid em http://localhost:${PORT}`);
-    console.log(`🌐 Ambiente: ${process.env.NODE_ENV || "development"}`);
+    console.log(`🌐 Ambiente: ${NODE_ENV}`);
+    console.log(`🔒 AUTH_SECRET: ${AUTH_SECRET.includes("troque") ? "⚠️  padrão (troque!)" : "configurado ✅"}`);
     console.log(`🧠 Provider: ${AI_PROVIDER}`);
     if (AI_PROVIDER === "ollama") {
         console.log(`   └ Ollama: ${OLLAMA_BASE_URL} (modelo: ${OLLAMA_MODEL})`);
@@ -851,5 +1170,9 @@ app.listen(PORT, "0.0.0.0", () => {
     else {
         console.log(`   └ OpenAI-compatible: ${OPENAI_BASE_URL} (modelo: ${OPENAI_MODEL})`);
         console.log(`   └ API key: ${OPENAI_API_KEY ? "configurada ✅" : "FALTANDO ❌"}`);
+    }
+    if (IS_PRODUCTION) {
+        console.log(`   └ CORS: ${allowedOrigin}`);
+        console.log(`   └ Debug endpoints: desabilitados`);
     }
 });
