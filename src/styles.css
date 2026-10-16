@@ -3950,3 +3950,31 @@ body {
     max-height: 60vh;
   }
 }
+
+/* =========================================================
+   FIX — Mode Toggle clicável
+   ========================================================= */
+.mode-toggle {
+  position: relative;
+  z-index: 1;
+}
+
+.mode-option {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto !important;
+}
+
+.mode-option * {
+  pointer-events: none;
+}
+
+.mode-option::before,
+.mode-option::after {
+  pointer-events: none;
+}
+
+.mode-toggle-wrap {
+  position: relative;
+  z-index: 10;
+}

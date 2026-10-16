@@ -795,8 +795,17 @@ export default function App() {
   }, [report, mode]);
 
   function handleModeChange(next: AnalysisMode) {
-    // ...
+  console.log('🔥 handleModeChange chamado:', { next, modeAtual: mode });
+  if (next === mode) {
+    console.log('❌ Bloqueado: next === mode');
+    return;
   }
+  console.log('✅ Vai mudar para', next);
+  setMode(next);
+  setReport(null);
+  setError("");
+  setProgress([]);
+}
 
   async function analyze() {
     setError("");
