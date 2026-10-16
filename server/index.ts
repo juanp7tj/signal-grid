@@ -12,6 +12,9 @@ import { fileURLToPath } from "node:url";
 const app = express();
 
 const PORT = Number(process.env.PORT || 3001);
+const NODE_ENV = process.env.NODE_ENV || "development";
+const IS_PRODUCTION = NODE_ENV === "production";
+
 const AI_PROVIDER = (process.env.AI_PROVIDER || "openai-compatible") as
   | "ollama"
   | "openai-compatible";
@@ -42,8 +45,110 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "openai/gpt-oss-120b";
 
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 300_000);
 
-app.use(cors());
+/* =========================================================
+   Segurança — avisos no boot
+   ========================================================= */
+if (IS_PRODUCTION && AUTH_SECRET.includes("troque")) {
+  console.error(
+    "❌ ERRO: Em produção você DEVE configurar AUTH_SECRET com uma string longa e aleatória."
+  );
+  process.exit(1);
+}
+
+if (IS_PRODUCTION && !OPENAI_API_KEY) {
+  console.error("❌ ERRO: OPENAI_API_KEY não configurada em produção.");
+  process.exit(1);
+}
+
+if (IS_PRODUCTION && !process.env.ALLOWED_ORIGIN) {
+  console.warn(
+    "⚠️  ALLOWED_ORIGIN não configurado. CORS vai aceitar só mesma origem."
+  );
+}
+
+/* =========================================================
+   Middlewares globais
+   ========================================================= */
+// CORS — em produção, só aceita a origem configurada
+const allowedOrigin = process.env.ALLOWED_ORIGIN || "*";
+app.use(
+  cors({
+    origin: IS_PRODUCTION ? allowedOrigin : true,
+    credentials: false,
+  })
+);
+
 app.use(express.json({ limit: "1mb" }));
+
+// Esconde o header "X-Powered-By: Express"
+app.disable("x-powered-by");
+
+// Headers de segurança básicos
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader(
+    "Permissions-Policy",
+    "geolocation=(), microphone=(), camera=()"
+  );
+  next();
+});
+
+// Em produção, força HTTPS
+if (IS_PRODUCTION) {
+  app.use((req, res, next) => {
+    if (req.headers["x-forwarded-proto"] !== "https") {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+
+/* =========================================================
+   Rate limit — anti brute-force (em memória)
+   ========================================================= */
+const loginAttempts = new Map<
+  string,
+  { count: number; blockedUntil: number }
+>();
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_BLOCK_MS = 1000 * 60 * 15; // 15 min
+
+function loginRateLimit(req: any, res: any, next: any) {
+  const ip = req.ip || req.connection?.remoteAddress || "unknown";
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+
+  if (record && record.blockedUntil > now) {
+    const secondsLeft = Math.ceil((record.blockedUntil - now) / 1000);
+    return res.status(429).json({
+      error: `Muitas tentativas. Tente novamente em ${secondsLeft}s.`,
+    });
+  }
+
+  if (record && record.blockedUntil <= now) {
+    loginAttempts.delete(ip);
+  }
+
+  req._loginIp = ip;
+  next();
+}
+
+function registerLoginFailure(ip: string) {
+  const now = Date.now();
+  const record = loginAttempts.get(ip) || { count: 0, blockedUntil: 0 };
+  record.count += 1;
+  if (record.count >= LOGIN_MAX_ATTEMPTS) {
+    record.blockedUntil = now + LOGIN_BLOCK_MS;
+    record.count = 0;
+  }
+  loginAttempts.set(ip, record);
+}
+
+function registerLoginSuccess(ip: string) {
+  loginAttempts.delete(ip);
+}
 
 /* =========================================================
    Tipos
@@ -91,7 +196,7 @@ type User = {
   id: string;
   username: string;
   passwordHash: string;
-  plainPassword?: string; // opcional — usado só para o admin conseguir ver
+  plainPassword?: string;
   role: "admin" | "user";
   createdAt: string;
 };
@@ -219,7 +324,9 @@ async function ensureAdminSeed(): Promise<void> {
   };
   users.push(admin);
   await writeUsers(users);
-  console.log("[auth] Admin padrão criado → usuário: admin | senha: admin123");
+  console.log(
+    "[auth] Admin padrão criado → usuário: admin | senha: admin123 (TROQUE IMEDIATAMENTE)"
+  );
 }
 
 function requireAuth(req: any, res: any, next: any) {
@@ -557,17 +664,26 @@ app.get("/api/health", (_req, res) => {
 /* =========================================================
    AUTH — rotas
    ========================================================= */
-app.post("/api/auth/login", async (req, res) => {
+
+// Login — com rate limit
+app.post("/api/auth/login", loginRateLimit, async (req, res) => {
   const username = String(req.body?.username || "").trim();
   const password = String(req.body?.password || "");
+  const ip = req._loginIp;
+
   if (!username || !password) {
+    registerLoginFailure(ip);
     return res.status(400).json({ error: "Informe usuário e senha." });
   }
+
   const users = await readUsers();
   const user = users.find((u) => u.username === username);
   if (!user || !verifyPassword(password, user.passwordHash)) {
+    registerLoginFailure(ip);
     return res.status(401).json({ error: "Usuário ou senha inválidos." });
   }
+
+  registerLoginSuccess(ip);
   const token = makeToken({ uid: user.id, role: user.role });
   res.json({
     ok: true,
@@ -580,6 +696,7 @@ app.post("/api/auth/login", async (req, res) => {
   });
 });
 
+// Sessão atual
 app.get("/api/auth/me", requireAuth, async (req, res) => {
   const users = await readUsers();
   const user = users.find((u) => u.id === (req as any).auth.uid);
@@ -590,6 +707,7 @@ app.get("/api/auth/me", requireAuth, async (req, res) => {
   });
 });
 
+// Listar usuários (admin)
 app.get("/api/auth/users", requireAuth, requireAdmin, async (_req, res) => {
   const users = await readUsers();
   res.json({
@@ -599,11 +717,12 @@ app.get("/api/auth/users", requireAuth, requireAdmin, async (_req, res) => {
       username: u.username,
       role: u.role,
       createdAt: u.createdAt,
-      password: u.plainPassword || "—", // fallback para usuários antigos
+      password: u.plainPassword || "—",
     })),
   });
 });
 
+// Criar usuário (admin)
 app.post("/api/auth/users", requireAuth, requireAdmin, async (req, res) => {
   const username = String(req.body?.username || "").trim();
   const password = String(req.body?.password || "");
@@ -612,15 +731,20 @@ app.post("/api/auth/users", requireAuth, requireAdmin, async (req, res) => {
   if (username.length < 3) {
     return res.status(400).json({ error: "Usuário precisa ter 3+ caracteres." });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: "Senha precisa ter 6+ caracteres." });
+  if (password.length < 8) {
+    return res.status(400).json({ error: "Senha precisa ter 8+ caracteres." });
+  }
+  if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+    return res
+      .status(400)
+      .json({ error: "Usuário só pode conter letras, números, ponto, hífen e _." });
   }
 
   const users = await readUsers();
   if (users.some((u) => u.username === username)) {
     return res.status(409).json({ error: "Usuário já existe." });
   }
-    const user: User = {
+  const user: User = {
     id: makeId(),
     username,
     passwordHash: hashPassword(password),
@@ -636,6 +760,7 @@ app.post("/api/auth/users", requireAuth, requireAdmin, async (req, res) => {
   });
 });
 
+// Remover usuário (admin)
 app.delete("/api/auth/users/:id", requireAuth, requireAdmin, async (req, res) => {
   const users = await readUsers();
   const target = users.find((u) => u.id === req.params.id);
@@ -649,7 +774,7 @@ app.delete("/api/auth/users/:id", requireAuth, requireAdmin, async (req, res) =>
 });
 
 /* =========================================================
-   /api/history
+   /api/history — por usuário
    ========================================================= */
 app.get("/api/history", requireAuth, async (req, res) => {
   try {
@@ -684,9 +809,8 @@ app.get("/api/history/:id", requireAuth, async (req, res) => {
     if (!entry) {
       return res.status(404).json({ error: "Análise não encontrada." });
     }
-    // Admin vê tudo; usuário comum só vê o próprio
     if (role !== "admin" && entry.userId !== userId) {
-      return res.status(403).json({ error: "Sem permissão para ver esta análise." });
+      return res.status(403).json({ error: "Sem permissão." });
     }
     res.json({ ok: true, entry });
   } catch (error) {
@@ -707,7 +831,7 @@ app.delete("/api/history/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Análise não encontrada." });
     }
     if (role !== "admin" && target.userId !== userId) {
-      return res.status(403).json({ error: "Sem permissão para apagar esta análise." });
+      return res.status(403).json({ error: "Sem permissão." });
     }
     const filtered = entries.filter((e) => e.id !== req.params.id);
     await writeHistory(filtered);
@@ -737,9 +861,9 @@ app.delete("/api/history", requireAuth, async (req, res) => {
 });
 
 /* =========================================================
-   Debug interno
+   Debug interno — SOMENTE em dev
    ========================================================= */
-if (process.env.NODE_ENV !== "production") {
+if (!IS_PRODUCTION) {
   app.get("/api/_debug/health", async (_req, res) => {
     const providerInfo = {
       provider: AI_PROVIDER,
@@ -830,7 +954,7 @@ app.post("/api/analyze", requireAuth, async (req, res) => {
         : String(OPENAI_MODEL).slice(0, 100);
 
     console.log(
-      `[analyze] mode=${analysisMode} provider=${AI_PROVIDER} model=${model}`
+      `[analyze] user=${(req as any).auth.uid} mode=${analysisMode} provider=${AI_PROVIDER} model=${model}`
     );
 
     const schema = analysisMode === "single" ? schemaSingle : schemaCompare;
@@ -945,7 +1069,7 @@ ${validations}
     const parsed = extractJson(content);
     const report = normalizeReport(parsed, a, b, analysisMode);
 
-        try {
+    try {
       const userId = (req as any).auth.uid;
       const entries = await readHistory();
       const newEntry: HistoryEntry = {
@@ -961,11 +1085,14 @@ ${validations}
       };
       entries.unshift(newEntry);
 
-      // Limita por usuário (não global). Cada usuário tem até HISTORY_MAX entradas.
-      const userEntries = entries.filter((e) => e.userId === userId).slice(0, HISTORY_MAX);
+      // Limita por usuário (não global)
+      const userEntries = entries
+        .filter((e) => e.userId === userId)
+        .slice(0, HISTORY_MAX);
       const otherEntries = entries.filter((e) => e.userId !== userId);
       const limited = [...userEntries, ...otherEntries].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
       await writeHistory(limited);
@@ -979,7 +1106,7 @@ ${validations}
     console.error(`[analyze] erro: ${message}`);
     return res.status(502).json({
       error: "Não foi possível concluir a análise.",
-      details: process.env.NODE_ENV === "production" ? undefined : message,
+      details: IS_PRODUCTION ? undefined : message,
       hint:
         AI_PROVIDER === "ollama"
           ? "Verifique se o Ollama está ativo, se o modelo foi baixado e se OLLAMA_BASE_URL está correto."
@@ -1133,7 +1260,6 @@ function normalizeReport(
     kpi: String(o.kpi || "A definir"),
   });
 
-  // MODO ÚNICO
   if (analysisMode === "single") {
     const actionPlan: ActionItem[] = Array.isArray(r.actionPlan)
       ? (r.actionPlan as Record<string, unknown>[]).slice(0, 6).map(normalizeAction)
@@ -1152,7 +1278,6 @@ function normalizeReport(
     };
   }
 
-  // MODO COMPARAÇÃO
   const actionPlanA: ActionItem[] = Array.isArray(r.actionPlanA)
     ? (r.actionPlanA as Record<string, unknown>[]).slice(0, 5).map(normalizeAction)
     : [];
@@ -1211,21 +1336,33 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientDist = path.resolve(__dirname, "../dist");
 
-app.use(express.static(clientDist));
+app.use(express.static(clientDist, { dotfiles: "deny" }));
 
+// Qualquer rota que NÃO seja /api/* serve o index.html (SPA fallback)
 app.get(/^\/(?!api\/).*/, (_req, res, next) => {
   res.sendFile(path.join(clientDist, "index.html"), (error) => {
     if (error) next();
   });
 });
 
+// Handler de erros — sempre JSON
+app.use((err: any, _req: any, res: any, _next: any) => {
+  console.error("[global error]", err);
+  if (res.headersSent) return;
+  res.status(500).json({
+    error: "Erro interno no servidor.",
+    details: IS_PRODUCTION ? undefined : String(err?.message || err),
+  });
+});
+
 /* =========================================================
-   Start — UMA ÚNICA CHAMADA
+   Start
    ========================================================= */
 app.listen(PORT, "0.0.0.0", async () => {
   await ensureAdminSeed();
   console.log(`🚀 Signal Grid em http://localhost:${PORT}`);
-  console.log(`🌐 Ambiente: ${process.env.NODE_ENV || "development"}`);
+  console.log(`🌐 Ambiente: ${NODE_ENV}`);
+  console.log(`🔒 AUTH_SECRET: ${AUTH_SECRET.includes("troque") ? "⚠️  padrão (troque!)" : "configurado ✅"}`);
   console.log(`🧠 Provider: ${AI_PROVIDER}`);
   if (AI_PROVIDER === "ollama") {
     console.log(`   └ Ollama: ${OLLAMA_BASE_URL} (modelo: ${OLLAMA_MODEL})`);
@@ -1236,5 +1373,9 @@ app.listen(PORT, "0.0.0.0", async () => {
     console.log(
       `   └ API key: ${OPENAI_API_KEY ? "configurada ✅" : "FALTANDO ❌"}`
     );
+  }
+  if (IS_PRODUCTION) {
+    console.log(`   └ CORS: ${allowedOrigin}`);
+    console.log(`   └ Debug endpoints: desabilitados`);
   }
 });
