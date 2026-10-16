@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowDownRight,
@@ -56,7 +56,7 @@ const initialB: ProfileInput = {
 };
 
 /* =========================================================
-   Demo report — modo comparação
+   Demo report â€” modo comparação
    ========================================================= */
 const demoCompare: AnalysisReport = {
   title: "Diagnóstico competitivo: Perfil A vs Perfil B",
@@ -119,12 +119,12 @@ const demoCompare: AnalysisReport = {
     {
       priority: "Alta",
       title: "Executar testes de CTA",
-      reason: "Descobrir quais chamadas levam à ação desejada.",
+      reason: "Descobrir quais chamadas levam Ã  ação desejada.",
       steps: ["Criar duas variações de CTA", "Medir resultados"],
       metric: "Resultados documentados",
       deadline: "30 dias",
       owner: "Social Media",
-      kpi: "CTA vencedor com margem ≥ 20%",
+      kpi: "CTA vencedor com margem â‰¥ 20%",
     },
   ],
   caveats: [
@@ -136,7 +136,7 @@ const demoCompare: AnalysisReport = {
 };
 
 /* =========================================================
-   Demo report — modo único
+   Demo report â€” modo único
    ========================================================= */
 const demoSingle: AnalysisReport = {
   title: "Diagnóstico estratégico: Perfil",
@@ -203,12 +203,12 @@ const demoSingle: AnalysisReport = {
     {
       priority: "Média",
       title: "Executar testes de CTA",
-      reason: "Descobrir quais chamadas levam à ação.",
+      reason: "Descobrir quais chamadas levam Ã  ação.",
       steps: ["Criar duas variações", "Medir resultados"],
       metric: "Resultados documentados",
       deadline: "30 dias",
       owner: "Social Media",
-      kpi: "CTA vencedor com margem ≥ 20%",
+      kpi: "CTA vencedor com margem â‰¥ 20%",
     },
   ],
   caveats: [
@@ -383,7 +383,7 @@ function ActionCard({ item, index }: { item: ActionItem; index: number }) {
                 <strong>{item.deadline}</strong>
               </div>
               <div>
-                <small>RESPONSÁVEL</small>
+                <small>RESPONSÃVEL</small>
                 <strong>{item.owner}</strong>
               </div>
               <div className="meta-wide">
@@ -417,8 +417,8 @@ function ModeToggle({
           onClick={() => onChange("single")}
           aria-pressed={mode === "single"}
         >
-          <span className="mode-option-label">ANÁLISE ÚNICA</span>
-          <span className="mode-option-desc">1 perfil · diagnóstico individual</span>
+          <span className="mode-option-label">ANÃLISE ÃšNICA</span>
+          <span className="mode-option-desc">1 perfil Â· diagnóstico individual</span>
         </button>
         <button
           type="button"
@@ -426,8 +426,8 @@ function ModeToggle({
           onClick={() => onChange("compare")}
           aria-pressed={mode === "compare"}
         >
-          <span className="mode-option-label">COMPARAÇÃO</span>
-          <span className="mode-option-desc">2 perfis · diagnóstico competitivo</span>
+          <span className="mode-option-label">COMPARAÃ‡ÃƒO</span>
+          <span className="mode-option-desc">2 perfis Â· diagnóstico competitivo</span>
         </button>
       </div>
     </section>
@@ -509,7 +509,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <div className="print-meta">
           <span>{formatDate(report.generatedAt)}</span>
           <span className={`mode-tag ${report.mode}`}>
-            {report.mode === "demo" ? "DEMONSTRAÇÃO" : report.mode.toUpperCase()}
+            {report.mode === "demo" ? "DEMONSTRAÃ‡ÃƒO" : report.mode.toUpperCase()}
           </span>
         </div>
       </header>
@@ -519,15 +519,15 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <p className="print-summary">{report.summary}</p>
       </section>
 
-      {/* Modo COMPARE — visão geral + pilares */}
+      {/* Modo COMPARE â€” visão geral + pilares */}
       {!single && (
         <>
           <section className="print-section">
-            <h2>01 · Visão geral</h2>
+            <h2>01 Â· Visão geral</h2>
             <div className="print-overview">
               <div className="print-leader">
-                <small>PERFIL LÍDER</small>
-                <strong>{leader?.profileName ?? "—"}</strong>
+                <small>PERFIL LÃDER</small>
+                <strong>{leader?.profileName ?? "â€”"}</strong>
                 <div className="print-score">
                   {leader?.overall.toFixed(1)}
                   <small>/10</small>
@@ -565,7 +565,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
           </section>
 
           <section className="print-section">
-            <h2>02 · Comparação por pilares</h2>
+            <h2>02 Â· Comparação por pilares</h2>
             <table className="print-table">
               <thead>
                 <tr>
@@ -586,8 +586,8 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
                 ).map(([label, key]) => (
                   <tr key={key}>
                     <td>{label}</td>
-                    <td>{report.profiles[0]?.[key]?.toFixed(1) ?? "—"}</td>
-                    <td>{report.profiles[1]?.[key]?.toFixed(1) ?? "—"}</td>
+                    <td>{report.profiles[0]?.[key]?.toFixed(1) ?? "â€”"}</td>
+                    <td>{report.profiles[1]?.[key]?.toFixed(1) ?? "â€”"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -596,14 +596,14 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         </>
       )}
 
-      {/* Modo SINGLE — diagnóstico do perfil */}
+      {/* Modo SINGLE â€” diagnóstico do perfil */}
       {single && (
         <section className="print-section">
-          <h2>01 · Diagnóstico do perfil</h2>
+          <h2>01 Â· Diagnóstico do perfil</h2>
           <div className="print-overview">
             <div className="print-leader">
               <small>PERFIL</small>
-              <strong>{leader?.profileName ?? "—"}</strong>
+              <strong>{leader?.profileName ?? "â€”"}</strong>
               <div className="print-score">
                 {leader?.overall.toFixed(1)}
                 <small>/10</small>
@@ -621,9 +621,9 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
                   ] as const
                 ).map(([label, key]) => (
                   <li key={key}>
-                    <span className="print-rank-num">—</span>
+                    <span className="print-rank-num">â€”</span>
                     <span>{label}</span>
-                    <strong>{leader?.[key]?.toFixed(1) ?? "—"}</strong>
+                    <strong>{leader?.[key]?.toFixed(1) ?? "â€”"}</strong>
                   </li>
                 ))}
               </ol>
@@ -635,12 +635,12 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
       {/* Oportunidades */}
       {report.opportunities.length > 0 && (
         <section className="print-section">
-          <h2>{single ? "02" : "03"} · Oportunidades prioritárias</h2>
+          <h2>{single ? "02" : "03"} Â· Oportunidades prioritárias</h2>
           <ol className="print-list">
             {report.opportunities.map((o, i) => (
               <li key={o.title}>
                 <strong>
-                  {String(i + 1).padStart(2, "0")} · {o.title}
+                  {String(i + 1).padStart(2, "0")} Â· {o.title}
                 </strong>
                 <span className="print-impact">[{o.impact}]</span>
                 <p>{o.description}</p>
@@ -652,7 +652,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
 
       {/* Plano de ação */}
       <section className="print-section">
-        <h2>{single ? "03" : "04"} · Plano de ação</h2>
+        <h2>{single ? "03" : "04"} Â· Plano de ação</h2>
         <ol className="print-actions">
           {(single
             ? report.actionPlan ?? []
@@ -661,7 +661,7 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
             <li key={`${a.title}-${i}`}>
               <div className="print-action-head">
                 <strong>
-                  {String(i + 1).padStart(2, "0")} · {a.title}
+                  {String(i + 1).padStart(2, "0")} Â· {a.title}
                 </strong>
                 <span className={`print-priority p-${a.priority.toLowerCase()}`}>
                   {a.priority}
@@ -696,13 +696,13 @@ function ReportPrintView({ report }: { report: AnalysisReport }) {
         <section className="print-section print-caveats">
           <h2>Limitações e premissas</h2>
           {report.caveats.map((c, i) => (
-            <p key={i}>— {c}</p>
+            <p key={i}>â€” {c}</p>
           ))}
         </section>
       )}
 
       <footer className="print-footer">
-        <span>SIGNAL GRID · COMPETITIVE INTELLIGENCE</span>
+        <span>SIGNAL GRID Â· COMPETITIVE INTELLIGENCE</span>
         <span>Gerado em {formatDate(report.generatedAt)}</span>
       </footer>
     </div>
@@ -731,10 +731,22 @@ export default function App() {
   const [evidence, setEvidence] = useState("");
   const [demoMode, setDemoMode] = useState(false);
 
-  // ⬇️ AQUI os três novos
+  // â¬‡ï¸ AQUI os três novos
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<HistorySummary[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  
+    const scoreDiff = useMemo(() => {
+    if (
+      mode !== "compare" ||
+      !report ||
+      report.profiles.length < 2
+    ) {
+      return 0;
+    }
+    return report.profiles[0].overall - report.profiles[1].overall;
+  }, [report, mode]);
 
   // Ao trocar de modo, limpa o relatório atual
   function handleModeChange(next: AnalysisMode) {
@@ -788,7 +800,7 @@ export default function App() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Não foi possível concluir a análise.");
+        throw new Error(data.error || "não foi possível concluir a análise.");
       }
       setReport(data as AnalysisReport);
       setActiveTab("overview");
@@ -917,7 +929,7 @@ export default function App() {
 
         <div className="workspace">
           <span className="workspace-dot" />
-          <span>AGÊNCIA / WORKSPACE 01</span>
+          <span>AGÃŠNCIA / WORKSPACE 01</span>
           <ChevronRight size={13} />
         </div>
 
@@ -963,7 +975,7 @@ export default function App() {
             <span className="pulse-dot" />
             <div>
               <strong>AGENT</strong>
-              <small>Groq · GPT-OSS 120B</small>
+              <small>Groq Â· GPT-OSS 120B</small>
             </div>
           </div>
           <div className="sidebar-foot">
@@ -1030,7 +1042,7 @@ export default function App() {
         </header>
 
         <div className="page-content">
-          {/* 🔥 TOGGLE DE MODO — primeira coisa visível */}
+          {/* ðŸ”¥ TOGGLE DE MODO â€” primeira coisa visível */}
           <ModeToggle mode={mode} onChange={handleModeChange} />
 
           <section className="hero-row">
@@ -1038,8 +1050,8 @@ export default function App() {
               <div className="eyebrow">
                 <span className="eyebrow-line" />{" "}
                 {mode === "single"
-                  ? "SOCIAL INTELLIGENCE / DIAGNÓSTICO ÚNICO"
-                  : "SOCIAL INTELLIGENCE / COMPARAÇÃO"}
+                  ? "SOCIAL INTELLIGENCE / DIAGNÃ“STICO ÃšNICO"
+                  : "SOCIAL INTELLIGENCE / COMPARAÃ‡ÃƒO"}
               </div>
               <h1>
                 {mode === "single" ? (
@@ -1079,7 +1091,7 @@ export default function App() {
                   </>
                 )}
               </span>
-              <strong>SG—01</strong>
+              <strong>SGâ€”01</strong>
             </div>
           </section>
 
@@ -1098,7 +1110,7 @@ export default function App() {
                     : "Informe os dois perfis e o contexto da análise."}
                 </p>
               </div>
-              <span className="required-note">* CAMPOS OBRIGATÓRIOS</span>
+              <span className="required-note">* CAMPOS OBRIGATÃ“RIOS</span>
             </div>
 
             <div
@@ -1107,7 +1119,7 @@ export default function App() {
               }`}
             >
               <ProfileForm
-                label={mode === "single" ? "PERFIL / ALVO" : "PERFIL A / REFERÊNCIA"}
+                label={mode === "single" ? "PERFIL / ALVO" : "PERFIL A / REFERÃŠNCIA"}
                 profile={profileA}
                 onChange={setProfileA}
               />
@@ -1126,7 +1138,7 @@ export default function App() {
             </div>
 
             <label className="evidence-label">
-              CONTEXTO / EVIDÊNCIAS OPCIONAIS <span>RECOMENDADO</span>
+              CONTEXTO / EVIDÃŠNCIAS OPCIONAIS <span>RECOMENDADO</span>
               <textarea
                 value={evidence}
                 onChange={(e) => setEvidence(e.target.value)}
@@ -1142,7 +1154,7 @@ export default function App() {
               <div className="briefing-note">
                 <ShieldCheck size={16} />
                 <span>
-                  Sem login no Instagram. Não acessamos dados privados nem
+                  Sem login no Instagram. não acessamos dados privados nem
                   extraímos métricas automaticamente.
                 </span>
               </div>
@@ -1170,8 +1182,8 @@ export default function App() {
                   {loading
                     ? "ANALISANDO..."
                     : mode === "single"
-                    ? "GERAR DIAGNÓSTICO"
-                    : "EXECUTAR COMPARAÇÃO"}
+                    ? "GERAR DIAGNÃ“STICO"
+                    : "EXECUTAR COMPARAÃ‡ÃƒO"}
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -1240,7 +1252,7 @@ export default function App() {
                     02 / RESULTADO{" "}
                     <span className={`mode-tag ${report.mode}`}>
                       {report.mode === "demo"
-                        ? "DEMONSTRAÇÃO"
+                        ? "DEMONSTRAÃ‡ÃƒO"
                         : report.mode.toUpperCase()}
                     </span>
                   </span>
@@ -1260,14 +1272,14 @@ export default function App() {
                       <TrendingUp size={17} />
                     </div>
                     <div className="lead-name">
-                      {topScore?.profileName || "—"}
+                      {topScore?.profileName || "â€”"}
                     </div>
                     <div className="lead-score">
                       {topScore?.overall.toFixed(1)}
                       <small>/10</small>
                     </div>
                     <div className="lead-bottom">
-                      <span>ÍNDICE ESTRATÉGICO</span>
+                      <span>ÃNDICE ESTRATÃ‰GICO</span>
                       {compare && (
                         <span className="delta">
                           <ArrowUpRight size={14} />{" "}
@@ -1311,7 +1323,7 @@ export default function App() {
                         ))}
                       </div>
                       <div className="ranking-foot">
-                        <span>VANTAGEM DO LÍDER</span>
+                        <span>VANTAGEM DO LÃDER</span>
                         <strong>{Math.abs(scoreDiff).toFixed(1)} PONTOS</strong>
                       </div>
                     </section>
@@ -1325,7 +1337,7 @@ export default function App() {
                       <BarChart3 size={17} />
                     </div>
                     <div className="pillar-head">
-                      <span>DIMENSÃO</span>
+                      <span>DIMENSÃƒO</span>
                       {single ? (
                         <span>{report.profiles[0]?.profileName}</span>
                       ) : (
@@ -1351,11 +1363,11 @@ export default function App() {
                       >
                         <span>{label}</span>
                         <strong>
-                          {report.profiles[0]?.[key].toFixed(1) ?? "—"}
+                          {report.profiles[0]?.[key].toFixed(1) ?? "â€”"}
                         </strong>
                         {!single && (
                           <strong className="muted-score">
-                            {report.profiles[1]?.[key].toFixed(1) ?? "—"}
+                            {report.profiles[1]?.[key].toFixed(1) ?? "â€”"}
                           </strong>
                         )}
                       </div>
@@ -1416,7 +1428,7 @@ export default function App() {
                         ))}
                         <div className="strength-weak">
                           <div>
-                            <span className="eyebrow">FORÇAS</span>
+                            <span className="eyebrow">FORÃ‡AS</span>
                             {p.strengths.map((s) => (
                               <p key={s}>
                                 <Check size={14} />
@@ -1425,7 +1437,7 @@ export default function App() {
                             ))}
                           </div>
                           <div>
-                            <span className="eyebrow">PONTOS DE ATENÇÃO</span>
+                            <span className="eyebrow">PONTOS DE ATENÃ‡ÃƒO</span>
                             {p.weaknesses.map((s) => (
                               <p key={s}>
                                 <ArrowDownRight size={14} />
@@ -1435,7 +1447,7 @@ export default function App() {
                           </div>
                         </div>
                         <div className="evidence-list">
-                          <span className="eyebrow">EVIDÊNCIAS / OBSERVAÇÕES</span>
+                          <span className="eyebrow">EVIDÃŠNCIAS / OBSERVAÃ‡Ã•ES</span>
                           {p.evidence.map((e) => (
                             <p key={e}>{e}</p>
                           ))}
@@ -1450,8 +1462,8 @@ export default function App() {
                 <section className="actions-section">
                   <div className="action-section-intro">
                     <div>
-                      <span className="section-index">03 / EXECUÇÃO</span>
-                      <h3>Do diagnóstico à ação.</h3>
+                      <span className="section-index">03 / EXECUÃ‡ÃƒO</span>
+                      <h3>Do diagnóstico Ã  ação.</h3>
                       <p>
                         {single
                           ? "Plano de ação específico para o perfil, com etapas, prazos e KPIs."
@@ -1481,7 +1493,7 @@ export default function App() {
                   </span>
                 </div>
                 <button className="text-button" onClick={analyze}>
-                  <LoaderCircle size={14} /> REFAZER ANÁLISE
+                  <LoaderCircle size={14} /> REFAZER ANÃLISE
                 </button>
               </section>
 
@@ -1489,7 +1501,7 @@ export default function App() {
                 <section className="caveats">
                   <strong>LIMITES E PREMISSAS</strong>
                   {report.caveats.map((c, i) => (
-                    <p key={i}>— {c}</p>
+                    <p key={i}>â€” {c}</p>
                   ))}
                 </section>
               )}
@@ -1497,10 +1509,10 @@ export default function App() {
           )}
 
           <footer className="page-footer">
-            <span>© 2026 SIGNAL GRID / INTERNAL USE</span>
+            <span>Â© 2026 SIGNAL GRID / INTERNAL USE</span>
             <span>
               BUILT FOR STRATEGIC THINKING{" "}
-              <span className="footer-dot">●</span>
+              <span className="footer-dot">â—</span>
             </span>
           </footer>
         </div>
@@ -1517,7 +1529,7 @@ export default function App() {
           >
             <div className="modal-head">
               <div>
-                <span className="eyebrow">HISTÓRICO / ANÁLISES</span>
+                <span className="eyebrow">HISTÃ“RICO / ANÃLISES</span>
                 <h2>Análises anteriores</h2>
               </div>
               <button
@@ -1544,7 +1556,7 @@ export default function App() {
                     >
                       <div className="history-item-top">
                         <span className={`mode-tag ${h.analysisMode}`}>
-                          {h.analysisMode === "compare" ? "COMPARAÇÃO" : "ÚNICA"}
+                          {h.analysisMode === "compare" ? "COMPARAÃ‡ÃƒO" : "ÃšNICA"}
                         </span>
                         <span className="history-date">
                           {formatDate(h.createdAt)}
@@ -1557,7 +1569,7 @@ export default function App() {
                           <span key={name} className="history-score">
                             {name}
                             <strong>
-                              {h.overallScores[i]?.toFixed(1) ?? "—"}
+                              {h.overallScores[i]?.toFixed(1) ?? "â€”"}
                             </strong>
                           </span>
                         ))}
@@ -1605,7 +1617,7 @@ export default function App() {
           >
             <div className="modal-head">
               <div>
-                <span className="eyebrow">CONFIGURAÇÃO / AGENTE</span>
+                <span className="eyebrow">CONFIGURAÃ‡ÃƒO / AGENTE</span>
                 <h2>Personalização</h2>
               </div>
               <button
@@ -1626,7 +1638,7 @@ export default function App() {
                   setSettings({ ...settings, model: e.target.value })
                 }
               >
-                <optgroup label="Groq (recomendado — grátis)">
+                <optgroup label="Groq (recomendado â€” grátis)">
                   <option value="openai/gpt-oss-120b">
                     openai/gpt-oss-120b (melhor)
                   </option>
@@ -1654,7 +1666,7 @@ export default function App() {
               >
                 <option>Português (Brasil)</option>
                 <option>English</option>
-                <option>Español</option>
+                <option>EspaÃ±ol</option>
               </select>
             </label>
 
@@ -1680,7 +1692,7 @@ export default function App() {
               className="button-primary modal-save"
               onClick={() => setShowSettings(false)}
             >
-              APLICAR CONFIGURAÇÕES <Check size={16} />
+              APLICAR CONFIGURAÃ‡Ã•ES <Check size={16} />
             </button>
           </section>
         </div>
