@@ -97,4 +97,5 @@ export type AuthUser = {
 
 export type ManagedUser = AuthUser & {
   createdAt: string;
+  password: string;
 };

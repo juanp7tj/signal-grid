@@ -90,6 +90,7 @@ type User = {
   id: string;
   username: string;
   passwordHash: string;
+  plainPassword?: string; // opcional — usado só para o admin conseguir ver
   role: "admin" | "user";
   createdAt: string;
 };
@@ -211,6 +212,7 @@ async function ensureAdminSeed(): Promise<void> {
     id: makeId(),
     username: "admin",
     passwordHash: hashPassword("admin123"),
+    plainPassword: "admin123",
     role: "admin",
     createdAt: new Date().toISOString(),
   };
@@ -596,6 +598,7 @@ app.get("/api/auth/users", requireAuth, requireAdmin, async (_req, res) => {
       username: u.username,
       role: u.role,
       createdAt: u.createdAt,
+      password: u.plainPassword || "—", // fallback para usuários antigos
     })),
   });
 });
@@ -616,10 +619,11 @@ app.post("/api/auth/users", requireAuth, requireAdmin, async (req, res) => {
   if (users.some((u) => u.username === username)) {
     return res.status(409).json({ error: "Usuário já existe." });
   }
-  const user: User = {
+    const user: User = {
     id: makeId(),
     username,
     passwordHash: hashPassword(password),
+    plainPassword: password,
     role,
     createdAt: new Date().toISOString(),
   };

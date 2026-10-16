@@ -3677,3 +3677,276 @@ body {
     animation: none;
   }
 }
+
+/* =========================================================
+   ADMIN — modal de usuários (tabela centralizada)
+   ========================================================= */
+.users-modal {
+  width: min(820px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.users-modal > p {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin: 8px 0 20px;
+}
+
+.user-create-form {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  padding: 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  margin-bottom: 20px;
+}
+
+.user-create-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font: 10px var(--mono);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.user-create-form input,
+.user-create-form select {
+  padding: 11px 12px;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--sans);
+}
+
+.user-create-form .button-primary {
+  padding: 12px 18px;
+  height: 42px;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 50vh;
+  padding: 4px 0;
+}
+
+.users-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.users-count {
+  font: 10px var(--mono);
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  background: var(--panel-2);
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+}
+
+/* Tabela */
+.users-table {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.users-table-head {
+  display: grid;
+  grid-template-columns: 1.3fr 1.4fr 0.8fr 1.3fr 90px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--panel-3);
+  border-bottom: 1px solid var(--line);
+  font: 9px var(--mono);
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.users-table-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.4fr 0.8fr 1.3fr 90px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s ease;
+}
+
+.users-table-row:last-child {
+  border-bottom: 0;
+}
+
+.users-table-row:hover {
+  background: rgba(200, 255, 61, 0.03);
+}
+
+.users-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.users-cell-username strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.users-cell-password code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--lime);
+  background: rgba(200, 255, 61, 0.06);
+  border: 1px solid rgba(200, 255, 61, 0.15);
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.users-cell-role .role-tag {
+  font-size: 9px;
+}
+
+.users-cell-date {
+  font: 11px var(--mono);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.users-cell-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.users-cell-actions .icon-button {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.user-delete-btn:hover {
+  color: var(--coral);
+  border-color: var(--coral);
+  background: rgba(255, 136, 110, 0.08);
+}
+
+.user-locked {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 24px 12px;
+}
+
+/* -----------------------------------------------------------
+   Responsivo — mobile
+   ----------------------------------------------------------- */
+@media (max-width: 900px) {
+  .users-modal {
+    max-height: 92vh;
+    padding: 24px 18px;
+  }
+
+  .user-create-form {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .user-create-form .button-primary {
+    grid-column: span 2;
+    width: 100%;
+  }
+
+  .users-table-head {
+    display: none;
+  }
+
+  .users-table {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .users-table-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "username actions"
+      "password password"
+      "role     date";
+    gap: 10px 12px;
+    padding: 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    align-items: start;
+  }
+
+  .users-cell-username { grid-area: username; }
+  .users-cell-password { grid-area: password; }
+  .users-cell-role { grid-area: role; }
+  .users-cell-date { grid-area: date; justify-self: end; }
+  .users-cell-actions { grid-area: actions; }
+
+  .users-cell-username strong {
+    font-size: 14px;
+  }
+
+  .users-cell-password code {
+    width: 100%;
+    text-align: center;
+    padding: 8px 12px;
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+
+  .users-cell-date {
+    font-size: 10px;
+  }
+
+  .users-list {
+    max-height: 60vh;
+  }
+}

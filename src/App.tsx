@@ -7,6 +7,8 @@ import {
   Check,
   ChevronRight,
   CircleHelp,
+  Eye,
+  EyeOff,
   FileText,
   Gauge,
   History,
@@ -782,7 +784,9 @@ export default function App() {
   const [newRole, setNewRole] = useState<UserRole>("user");
   const [userError, setUserError] = useState("");
   const [userLoading, setUserLoading] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
 
+  // ⬇️ Daqui para baixo continua tudo igual
   const scoreDiff = useMemo(() => {
     if (mode !== "compare" || !report || report.profiles.length < 2) {
       return 0;
@@ -791,11 +795,7 @@ export default function App() {
   }, [report, mode]);
 
   function handleModeChange(next: AnalysisMode) {
-    if (next === mode) return;
-    setMode(next);
-    setReport(null);
-    setError("");
-    setProgress([]);
+    // ...
   }
 
   async function analyze() {
@@ -1938,7 +1938,7 @@ export default function App() {
         </div>
       )}
 
-      {showUsers && authUser.role === "admin" && (
+            {showUsers && authUser.role === "admin" && (
         <div
           className="modal-backdrop"
           onClick={() => setShowUsers(false)}
@@ -1960,6 +1960,7 @@ export default function App() {
                 <X size={18} />
               </button>
             </div>
+
             <p>
               Crie contas comuns ou administradores. Contas comuns veem
               apenas Visão geral, Comparar perfis e Plano de ação.
@@ -1978,7 +1979,7 @@ export default function App() {
               <label>
                 Senha
                 <input
-                  type="password"
+                  type="text"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="mínimo 6 caracteres"
@@ -2019,32 +2020,92 @@ export default function App() {
             )}
 
             <div className="users-list">
-              <span className="eyebrow">CONTAS ATIVAS</span>
-              {managedUsers.map((u) => (
-                <div className="user-row" key={u.id}>
-                  <div className="user-info">
-                    <strong>{u.username}</strong>
-                    <span className={`role-tag role-${u.role}`}>
-                      {u.role}
-                    </span>
-                  </div>
-                  {u.role !== "admin" ? (
-                    <button
-                      className="icon-button"
-                      title="Apagar"
-                      onClick={() => deleteUser(u.id)}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  ) : (
-                    <span className="user-locked" title="Admin protegido">
-                      <Lock size={14} />
-                    </span>
-                  )}
-                </div>
-              ))}
+              <div className="users-list-header">
+                <span className="eyebrow">CONTAS ATIVAS</span>
+                <span className="users-count">
+                  {managedUsers.length} conta(s)
+                </span>
+              </div>
+
               {managedUsers.length === 0 && (
                 <p className="muted">Nenhuma conta cadastrada ainda.</p>
+              )}
+
+              {managedUsers.length > 0 && (
+                <div className="users-table">
+                  <div className="users-table-head">
+                    <span>Usuário</span>
+                    <span>Senha</span>
+                    <span>Tipo</span>
+                    <span>Criado em</span>
+                    <span aria-hidden="true"></span>
+                  </div>
+
+                  {managedUsers.map((u) => {
+                    const isVisible = !!visiblePasswords[u.id];
+                    return (
+                      <div className="users-table-row" key={u.id}>
+                        <span className="users-cell users-cell-username">
+                          <strong>{u.username}</strong>
+                        </span>
+
+                        <span className="users-cell users-cell-password">
+                          <code>
+                            {isVisible ? u.password : "•".repeat(8)}
+                          </code>
+                        </span>
+
+                        <span className="users-cell users-cell-role">
+                          <span className={`role-tag role-${u.role}`}>
+                            {u.role}
+                          </span>
+                        </span>
+
+                        <span className="users-cell users-cell-date">
+                          {formatDate(u.createdAt)}
+                        </span>
+
+                        <span className="users-cell users-cell-actions">
+                          <button
+                            className="icon-button"
+                            onClick={() =>
+                              setVisiblePasswords((v) => ({
+                                ...v,
+                                [u.id]: !v[u.id],
+                              }))
+                            }
+                            title={isVisible ? "Ocultar senha" : "Ver senha"}
+                            type="button"
+                          >
+                            {isVisible ? (
+                              <EyeOff size={14} />
+                            ) : (
+                              <Eye size={14} />
+                            )}
+                          </button>
+
+                          {u.role !== "admin" ? (
+                            <button
+                              className="icon-button user-delete-btn"
+                              title="Apagar"
+                              onClick={() => deleteUser(u.id)}
+                              type="button"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          ) : (
+                            <span
+                              className="user-locked"
+                              title="Admin protegido"
+                            >
+                              <Lock size={14} />
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </section>
